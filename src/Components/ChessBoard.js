@@ -1,20 +1,18 @@
 import React, { useEffect } from "react";
 import { useState } from "react";
+import { Chess } from "../utilities/ChessUtility";
 
 const ChessBoard = ({ FEN }) => {
     const [chessState, setChessState] = useState({
-        ranks: [
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-        ],
+        ...Chess.getInitialChessState(),
     });
-    
+
+    useEffect(() => {
+        setChessState((prevChessState) => {
+            return { ...Chess.fenParser(FEN) };
+        });
+    }, [FEN]);
+
     return (
         <>
             <svg

@@ -8,6 +8,7 @@ const ChessBoard = ({ FEN }) => {
         ...Chess.getInitialChessState(),
     });
 
+    //effect for rendering UI when FEN string changes
     useEffect(() => {
         setChessState((prevChessState) => {
             return { ...Chess.fenParser(FEN) };
@@ -38,6 +39,7 @@ const ChessBoard = ({ FEN }) => {
                                 key={"" + col_index + row_index}
                                 col_index={col_index}
                                 row_index={row_index}
+                                payload={square}
                             ></Square>
                         );
                     });

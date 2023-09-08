@@ -1,38 +1,47 @@
 .App {
+  /* height: 40rem;
+  width: 40rem; */
+  overflow-x: hidden;
+  background-color: #001440;
+  padding: 10px 5px 10px 5px;
+  display: grid;
+  grid-template-columns: 15rem 45rem 40rem;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.left-panel {
+  padding: 10px;
+}
+
+.left-panel-inner {
+  padding: 5px;
+}
+
+.left-panel-inner .lpanel-option {
+  height: 50px;
+  width: auto;
+  color: #fff;
+  margin: 3px;
+  padding: 5px;
+  font-weight: bolder;
+  cursor: pointer;
   text-align: center;
 }
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.left-panel-inner .lpanel-option:hover {
+  background-color: #16419d88;
+  border-radius: 8px;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.left-panel > p {
+  color: #fff;
+  font-size: larger;
+  font-weight: bolder;
+  font-style: normal;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.leftOptionsInner {
+  position: "absolute";
+  z-index: 1;
+  top: 30px;
+  background-color: "#d0cdf9  ";
 }

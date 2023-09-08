@@ -1,19 +1,19 @@
 import React, { useEffect } from "react";
 import { useState } from "react";
+import { Chess } from "../utilities/ChessUtility";
+import Square from "./Square";
 
 const ChessBoard = ({ FEN }) => {
   const [chessState, setChessState] = useState({
-    ranks: [
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0],
-    ],
+    ...Chess.getInitialChessState(),
   });
+
+  //effect for rendering UI when FEN string changes
+  useEffect(() => {
+    setChessState((prevChessState) => {
+      return { ...Chess.fenParser(FEN) };
+    });
+  }, [FEN]);
 
   return (
     <>
@@ -30,29 +30,12 @@ const ChessBoard = ({ FEN }) => {
         {chessState.ranks.map((rank, row_index) => {
           return rank.map((square, col_index) => {
             return (
-              <>
-                {(row_index + col_index) % 2 === 0 ? (
-                  <rect
-                    id={"" + row_index + col_index}
-                    key={"square" + row_index + col_index}
-                    x={col_index * 100}
-                    y={row_index * 100}
-                    height={100}
-                    width={100}
-                    fill="#ccc"
-                  />
-                ) : (
-                  <rect
-                    id={"" + row_index + col_index}
-                    key={"" + row_index + col_index}
-                    x={col_index * 100}
-                    y={row_index * 100}
-                    height={100}
-                    width={100}
-                    fill="#999"
-                  />
-                )}
-              </>
+              <Square
+                key={"" + col_index + row_index}
+                col_index={col_index}
+                row_index={row_index}
+                payload={square}
+              ></Square>
             );
           });
         })}

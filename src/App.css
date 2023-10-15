@@ -1,20 +1,44 @@
 .App {
-  /* height: 40rem;
-  width: 40rem; */
   overflow-x: hidden;
   background-color: #001440;
   padding: 10px 5px 10px 5px;
-  display: grid;
-  grid-template-columns: 15rem 45rem 40rem;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  /* height: 100vh;
+  width: 100vw; */
+  overflow: hidden;
 }
 
+/* left panel */
 .left-panel {
+  text-align: center;
+  flex: 0 0 20%;
+
   padding: 10px;
+  position: sticky;
+  top: 0;
+  height: 100%;
+  z-index: 2;
+}
+
+.right-pannel {
+  flex: 1;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 30px;
+}
+.left-panel .buttons {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .left-panel-inner {
   padding: 5px;
+  background-color: #032d87;
+  margin: 10px 0 10px 0;
+  border-radius: 8px;
 }
 
 .left-panel-inner .lpanel-option {
@@ -43,5 +67,46 @@
   position: "absolute";
   z-index: 1;
   top: 30px;
-  background-color: "#d0cdf9  ";
+  cursor: pointer;
+}
+.optionDiv {
+  padding: 1.5px;
+  font-size: 20;
+  font-weight: 200px;
+}
+.optionDiv:hover {
+  padding: 2px;
+  background-color: rgb(92, 109, 165);
+  color: #fff;
+  border-radius: 10px;
+}
+
+.buttons > Button {
+  margin-bottom: 15px;
+}
+
+/* right panel */
+.right-inner {
+  flex: 1;
+  padding: 10px;
+  background-color: #032d87;
+  margin: 10px 0 20px 0;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+}
+.right-inner > Button {
+  margin: 15px 10px 15px 10px;
+  height: 50px;
+  width: auto;
+  color: #032d87;
+  font-weight: bolder;
+  font-size: medium;
+}
+
+/* middle panel */
+.chess-inner {
+  background-color: #032d87;
+  padding: 10px;
+  border-radius: 8px;
 }

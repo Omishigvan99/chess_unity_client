@@ -1,49 +1,26 @@
 import React, { useState } from "react";
-import chessLogo from "../Assets/chessLogo.png";
+import { Button } from "@mui/material";
+import { panelOptions, regOptions } from ".";
+import { useNavigate } from "react-router-dom";
 
-const LeftPanel = () => {
+const LeftPanel = (props) => {
+  const navigate = useNavigate();
+
+  const { setOpen = () => {}, setPageName = () => {} } = props;
   const [showPanel, setShowPanel] = useState({
     state: "",
     id: 1,
   });
-  const panelOptions = [
-    {
-      id: 1,
-      name: "Puzzle",
-      options: ["Play", "Computer", "Tournaments"],
-    },
-    {
-      id: 2,
-      name: "Puzzles",
-      options: [
-        "Puzzle",
-        "Puzzle Rush",
-        "Puzzle Battle",
-        "Daily Puzzle",
-        "Custom Puzzle",
-      ],
-    },
-    {
-      id: 3,
-      name: "News",
-      options: ["News", "Chess Ranking", "Top Player", "Articles"],
-    },
-    {
-      id: 4,
-      name: "Tutorials",
-      options: [],
-    },
-  ];
 
   return (
-    <div className="left-panel">
+    <div
+      className="left-panel"
+      onMouseLeave={() => {
+        setShowPanel({ ...showPanel, state: false });
+      }}
+    >
       <span style={{ color: "#fff" }}>| Chess Unity</span>
-      <div
-        className="left-panel-inner"
-        onMouseLeave={() => {
-          setShowPanel({ ...showPanel, state: false });
-        }}
-      >
+      <div className="left-panel-inner">
         {panelOptions.map((e) => {
           return (
             <div
@@ -57,8 +34,30 @@ const LeftPanel = () => {
             </div>
           );
         })}
+        {showPanel.state && (
+          <LeftOptions data={panelOptions} id={showPanel.id} />
+        )}
       </div>
-      {showPanel.state && <LeftOptions data={panelOptions} id={showPanel.id} />}
+      <div className="buttons">
+        {regOptions?.map((e) => {
+          return (
+            <Button
+              variant="contained"
+              color="inherit"
+              key={e.key}
+              onClick={() => {
+                setOpen(true);
+                setPageName(e.name);
+                let name =
+                  e.name === "sign up" ? e.name.replace(/\s+/g, "") : e.name;
+                navigate(name);
+              }}
+            >
+              {e.name}
+            </Button>
+          );
+        })}
+      </div>
     </div>
   );
 };
@@ -73,10 +72,13 @@ const LeftOptions = (props) => {
         position: "absolute",
         zIndex: "1",
         top: "30px",
-        backgroundColor: "#d0cdf9 ",
+        backgroundColor: "rgb(254, 254, 254) ",
         height: "auto",
         left: "200px",
-        width: "90px",
+        width: "100px",
+        borderRadius: "8px",
+        textAlign: "center",
+        cursor: "pointer",
       }}
       className="left-panel-inner"
     >
@@ -85,7 +87,7 @@ const LeftOptions = (props) => {
           <div key={panel.id}>
             {panel.options.map((e) => {
               return (
-                <div key={e.id}>
+                <div className="optionDiv" key={e.id}>
                   <p>{e}</p>
                 </div>
               );

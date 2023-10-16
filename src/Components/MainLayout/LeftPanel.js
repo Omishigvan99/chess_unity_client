@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { Button } from "@mui/material";
-import { panelOptions, regOptions } from ".";
+import { panelOptions, regOptions } from "..";
 import { useNavigate } from "react-router-dom";
 
 const LeftPanel = (props) => {
   const navigate = useNavigate();
 
-  const { setOpen = () => {}, setPageName = () => {} } = props;
+  const { setOpen = () => {}, setPageName = () => {}, isAuthenticated } = props;
   const [showPanel, setShowPanel] = useState({
     state: "",
     id: 1,
@@ -38,26 +38,28 @@ const LeftPanel = (props) => {
           <LeftOptions data={panelOptions} id={showPanel.id} />
         )}
       </div>
-      <div className="buttons">
-        {regOptions?.map((e) => {
-          return (
-            <Button
-              variant="contained"
-              color="inherit"
-              key={e.key}
-              onClick={() => {
-                setOpen(true);
-                setPageName(e.name);
-                let name =
-                  e.name === "sign up" ? e.name.replace(/\s+/g, "") : e.name;
-                navigate(name);
-              }}
-            >
-              {e.name}
-            </Button>
-          );
-        })}
-      </div>
+      {!isAuthenticated ? (
+        <div className="buttons">
+          {regOptions?.map((e) => {
+            return (
+              <Button
+                variant="contained"
+                color="inherit"
+                key={e.key}
+                onClick={() => {
+                  setOpen(true);
+                  setPageName(e.name);
+                  let name =
+                    e.name === "sign up" ? e.name.replace(/\s+/g, "") : e.name;
+                  navigate(`/home/${name}`);
+                }}
+              >
+                {e.name}
+              </Button>
+            );
+          })}
+        </div>
+      ) : null}
     </div>
   );
 };

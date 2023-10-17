@@ -4,9 +4,9 @@ import { panelOptions, regOptions } from "..";
 import { useNavigate } from "react-router-dom";
 
 const LeftPanel = (props) => {
-  const navigate = useNavigate();
-
   const { setOpen = () => {}, setPageName = () => {}, isAuthenticated } = props;
+
+  const navigate = useNavigate();
   const [showPanel, setShowPanel] = useState({
     state: "",
     id: 1,
@@ -19,7 +19,14 @@ const LeftPanel = (props) => {
         setShowPanel({ ...showPanel, state: false });
       }}
     >
-      <span style={{ color: "#fff" }}>| Chess Unity</span>
+      <span
+        style={{ color: "#fff", cursor: "pointer" }}
+        onClick={() => {
+          navigate(`/`);
+        }}
+      >
+        | Chess Unity
+      </span>
       <div className="left-panel-inner">
         {panelOptions.map((e) => {
           return (
@@ -51,7 +58,7 @@ const LeftPanel = (props) => {
                   setPageName(e.name);
                   let name =
                     e.name === "sign up" ? e.name.replace(/\s+/g, "") : e.name;
-                  navigate(`/home/${name}`);
+                  navigate(`/${name}`);
                 }}
               >
                 {e.name}
@@ -100,3 +107,18 @@ const LeftOptions = (props) => {
     </div>
   );
 };
+
+//  <Button
+//                 variant="contained"
+//                 color="inherit"
+//                 key={e.key}
+//                 onClick={() => {
+//                   setOpen(true);
+//                   setPageName(e.name);
+//                   let name =
+//                     e.name === "sign up" ? e.name.replace(/\s+/g, "") : e.name;
+//                   Navigate(`/home/${name}`);
+//                 }}
+//               >
+//                 {e.name}{" "}
+//               </Button>

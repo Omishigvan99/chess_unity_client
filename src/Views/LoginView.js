@@ -14,7 +14,7 @@ const LoginView = ({ open, setOpenLogin = () => {} }) => {
     return (
         <Modal
             open={open}
-            // onOk={() => setOpenLogin({ id: 0, state: false })}
+            onOk={() => setOpenLogin({ id: 0, state: false })}
             onCancel={() => setOpenLogin({ id: 0, state: false })}
         >
             <Form
@@ -34,6 +34,7 @@ const LoginView = ({ open, setOpenLogin = () => {} }) => {
                 }}
             >
                 <Form.Item
+                    style={{ marginTop: '1.2rem' }}
                     label="Enter Email"
                     name="email"
                     rules={[
@@ -44,6 +45,7 @@ const LoginView = ({ open, setOpenLogin = () => {} }) => {
                 >
                     <Input
                         value={loginData.email}
+                        type="email"
                         onChange={(e) =>
                             setLoginData({
                                 ...loginData,

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Button, Modal, Input } from 'antd'
+import { useNavigate } from 'react-router'
 
 const PopupView = ({
     openPopup,
@@ -8,8 +9,10 @@ const PopupView = ({
 }) => {
     const [invite, setInvite] = useState('')
 
+    const navigate = useNavigate()
     const onClickHandler = () => {
-        alert(invite)
+        // alert(invite)
+        navigate(invite)
         setOpenPopup(false)
     }
     return (

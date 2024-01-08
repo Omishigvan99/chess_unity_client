@@ -3,6 +3,9 @@ import SignupView from '../Views/SignupView'
 import LoginView from '../Views/LoginView'
 import PopupView from '../Views/PopupView'
 import { Layout, theme } from 'antd'
+
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
+
 const { Content } = Layout
 const MainContainer = ({
     openLogin,
@@ -14,38 +17,43 @@ const MainContainer = ({
         token: { colorBgContainer },
     } = theme.useToken()
     return (
-        <Content
-            style={{
-                margin: '14px  14px 0  14px',
-            }}
-        >
-            <div
+        <Router>
+            <Content
                 style={{
-                    padding: 24,
-                    minHeight: '100%',
-                    background: colorBgContainer,
+                    margin: '14px  14px 0  14px',
                 }}
             >
-                {openLogin?.state && openLogin?.id === '11' ? (
-                    <LoginView
-                        open={openLogin.state}
-                        setOpenLogin={setOpenLogin}
-                    />
-                ) : (
-                    <SignupView
-                        open={openLogin?.state}
-                        setOpenLogin={setOpenLogin}
-                    />
-                )}
+                <div
+                    style={{
+                        padding: 24,
+                        minHeight: '100%',
+                        background: colorBgContainer,
+                    }}
+                >
+                    <Routes>
+                        <Route path="/" />
+                    </Routes>
+                    {openLogin?.state && openLogin?.id === '11' ? (
+                        <LoginView
+                            open={openLogin.state}
+                            setOpenLogin={setOpenLogin}
+                        />
+                    ) : (
+                        <SignupView
+                            open={openLogin?.state}
+                            setOpenLogin={setOpenLogin}
+                        />
+                    )}
 
-                {openPopup && (
-                    <PopupView
-                        openPopup={openPopup}
-                        setOpenPopup={setOpenPopup}
-                    />
-                )}
-            </div>
-        </Content>
+                    {openPopup && (
+                        <PopupView
+                            openPopup={openPopup}
+                            setOpenPopup={setOpenPopup}
+                        />
+                    )}
+                </div>
+            </Content>
+        </Router>
     )
 }
 

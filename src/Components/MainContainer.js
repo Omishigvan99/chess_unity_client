@@ -3,9 +3,7 @@ import SignupView from '../Views/SignupView'
 import LoginView from '../Views/LoginView'
 import PopupView from '../Views/PopupView'
 import { Layout, theme } from 'antd'
-
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
-
 const { Content } = Layout
 const MainContainer = ({
     openLogin,

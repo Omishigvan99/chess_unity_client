@@ -1,6 +1,6 @@
 import { useContext, useState } from 'react'
 import { DesktopOutlined, TeamOutlined, UserOutlined } from '@ant-design/icons'
-import { Layout, Menu } from 'antd'
+import { Layout, Menu, theme } from 'antd'
 import { SidenavContext } from '../context/sidenav.context'
 import { CustomThemeContext } from '../context/customTheme.context'
 import MenuTrigger from './UI/MenuTrigger'
@@ -51,6 +51,9 @@ const SideNav = () => {
         useContext(SidenavContext)
     const [collapsedWidth, setCollapsedWidth] = useState(80)
     const { setColorStyle } = useContext(CustomThemeContext)
+    const {
+        token: { colorBorder },
+    } = theme.useToken()
 
     //brokenHandler
     const onBreakpointHandler = (broken) => {
@@ -65,10 +68,16 @@ const SideNav = () => {
 
     //menu click handler
     const onMenuClickHandler = (event) => {
-        if (event.key === 'dark-mode-on') {
-            setColorStyle('dark')
-        } else {
-            setColorStyle('light')
+        console.log(event)
+        switch (event.key) {
+            case 'dark-mode-on':
+                setColorStyle('dark')
+                break
+            case 'dark-mode-off':
+                setColorStyle('light')
+                break
+            default:
+                break
         }
     }
 
@@ -84,7 +93,10 @@ const SideNav = () => {
             breakpoint="sm"
             trigger={null}
             collapsedWidth={collapsedWidth}
-            style={styles.sideNavContainer}
+            style={{
+                ...styles.sideNavContainer,
+                borderRight: `.5px solid ${colorBorder}`,
+            }}
             theme="light"
         >
             <div className="demo-logo-vertical" />

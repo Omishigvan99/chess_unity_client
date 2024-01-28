@@ -38,7 +38,10 @@ function DarkTrigger() {
                         ></DeploymentUnitOutlined>
                         <Typography.Text>Dark Mode</Typography.Text>
                     </Space>
-                    <Switch onChange={onSwitchChangeHandler}></Switch>
+                    <Switch
+                        onChange={onSwitchChangeHandler}
+                        value={colorStyle === 'dark' ? true : false}
+                    ></Switch>
                 </Flex>
             )}
         </>

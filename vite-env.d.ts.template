@@ -1,0 +1,8 @@
+// https://vitejs.dev/guide/env-and-mode.html#env-files
+
+/// <reference types="vite/client" />
+
+interface ImportMetaEnv {
+    // env variables
+    //example: VITE_API_URL: string
+}

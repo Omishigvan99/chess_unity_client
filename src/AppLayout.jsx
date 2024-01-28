@@ -7,7 +7,7 @@ import Login from './Components/modals/Login'
 import Signup from './Components/modals/Signup'
 
 import { ConfigProvider, Layout, theme } from 'antd'
-import ModalContextProvider from './context/modal.context'
+import ModalContextProvider from './context/sidenav.context'
 import SidenavContextProvider from './context/sidenav.context'
 import { CustomThemeContext } from './context/customTheme.context'
 

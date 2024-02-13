@@ -15,12 +15,14 @@ import { GlobalStore } from '../../store/global.store'
 import { setUser } from '../../store/auth.store'
 import { updateHandler } from '../../utils/auth'
 import { NotificationContext } from '../../context/notification.context'
+import { ModalContext } from '../../context/modal.context'
 import { uploadProfileImage } from '../../utils/profile'
 
 function UpdateForm() {
     const [form] = Form.useForm()
     const [authState, dispatch] = useContext(GlobalStore).auth
     const { openNotification } = useContext(NotificationContext)
+    const { setOpenChangePassword } = useContext(ModalContext)
     const [error, setError] = useState({
         isError: false,
         message: null,
@@ -193,7 +195,13 @@ function UpdateForm() {
                 )}
                 <Divider></Divider>
                 <Form.Item>
-                    <Typography.Link>Change password</Typography.Link>
+                    <Typography.Link
+                        onClick={() => {
+                            setOpenChangePassword(true)
+                        }}
+                    >
+                        Change password
+                    </Typography.Link>
                 </Form.Item>
             </Form>
         </>

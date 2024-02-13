@@ -1,32 +1,31 @@
+import { Form, Input, Alert, Button, ConfigProvider } from 'antd'
 import { useContext } from 'react'
-import { Form, Input, Button, Alert, ConfigProvider } from 'antd'
-import { signupHandler } from '../../utils/auth'
-import { NotificationContext } from '../../context/notification.context'
 import { ModalContext } from '../../context/modal.context'
+import { NotificationContext } from '../../context/notification.context'
+import { changePasswordHandler } from '../../utils/auth'
 
-function SignupForm({ error, setError, form }) {
-    const { setOpenSignup } = useContext(ModalContext)
+function ChangePasswordForm({ error, setError, form }) {
+    const { setOpenChangePassword } = useContext(ModalContext)
     const { openNotification } = useContext(NotificationContext)
     const { componentSize } = ConfigProvider.useConfig()
 
     // function to check validation
-    async function checkValidation() {
+    const checkValidation = async () => {
         try {
             return await form.validateFields()
-        } catch {
+        } catch (error) {
             throw new Error('Validation Error')
         }
     }
 
     // function to submit the form
-    async function onSubmitHandler() {
+    const onSubmitHandler = async () => {
         try {
             const formData = await checkValidation()
-            await signupHandler({
-                name: formData.name,
-                username: formData.username,
-                email: formData.email,
-                password: formData.password1,
+            await changePasswordHandler({
+                currentPassword: formData.oldpassword,
+                newPassword: formData.password1,
+                confirmNewPassword: formData.password2,
             })
         } catch (error) {
             switch (error.message) {
@@ -35,13 +34,6 @@ function SignupForm({ error, setError, form }) {
                         isError: true,
                         message: 'Validation Error',
                         description: 'Please check the form and submit again.',
-                    })
-                    break
-                case 'Registration Error':
-                    setError({
-                        isError: true,
-                        message: 'Registration Error',
-                        description: 'Username or Email already exists',
                     })
                     break
                 default:
@@ -55,63 +47,49 @@ function SignupForm({ error, setError, form }) {
             }
             return
         }
+
         openNotification(
             'success',
-            'Signup Successful',
-            'You have been signed up successfully'
+            'Password Change Successful',
+            'Password has been changed successfully'
         )
-        setOpenSignup(false)
+
+        form.resetFields()
+        setOpenChangePassword(false)
     }
 
     return (
         <Form
             form={form}
-            layout="vertical"
             labelAlign="left"
+            layout="vertical"
             size={componentSize}
         >
+            <Form.Item name="username" hidden>
+                <Input
+                    aria-hidden={true}
+                    autoComplete="username"
+                    name="username"
+                />
+            </Form.Item>
             <Form.Item
-                label="Name"
-                name="name"
+                label="Old Password"
+                name="oldpassword"
                 rules={[
                     {
                         required: true,
-                        max: 50,
-                        min: 3,
+                        message: 'Old Password is required',
+                        pattern:
+                            '^(?=.*[0-9])(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z]).{8,30}$',
+                        message:
+                            'Password must contain at least one number, one uppercase and lowercase letter, one Symbol out of [!@#$%^&*], and minimum 8 and maximum 30 characters',
                     },
                 ]}
             >
-                <Input placeholder="eg:- John Doe" autoComplete="name"></Input>
+                <Input.Password autoComplete="current-password" />
             </Form.Item>
             <Form.Item
-                label="Username"
-                name="username"
-                rules={[
-                    {
-                        required: true,
-                        max: 50,
-                        min: 3,
-                    },
-                ]}
-            >
-                <Input placeholder="eg:- John9898" autoComplete="username" />
-            </Form.Item>
-            <Form.Item
-                label="Email"
-                name="email"
-                rules={[
-                    {
-                        required: true,
-                        max: 50,
-                        min: 3,
-                        type: 'email',
-                    },
-                ]}
-            >
-                <Input placeholder="eg:- example@email.com" />
-            </Form.Item>
-            <Form.Item
-                label="Password"
+                label="New Password"
                 name="password1"
                 rules={[
                     {
@@ -125,7 +103,6 @@ function SignupForm({ error, setError, form }) {
             >
                 <Input.Password autoComplete="new-password" />
             </Form.Item>
-
             <Form.Item
                 label="Confirm Password"
                 name="password2"
@@ -144,23 +121,22 @@ function SignupForm({ error, setError, form }) {
                             }
                             return Promise.reject(
                                 new Error(
-                                    'The two passwords that you entered do not match!'
+                                    'The two passwords that you entered do not match'
                                 )
                             )
                         },
                     }),
                 ]}
             >
-                <Input.Password autoComplete="new-password" />
+                <Input.Password autoComplete="new-password"></Input.Password>
             </Form.Item>
-
             <Form.Item>
                 <Button
                     type="primary"
                     htmlType="submit"
-                    onClick={() => onSubmitHandler()}
+                    onClick={onSubmitHandler}
                 >
-                    Signup
+                    Update
                 </Button>
             </Form.Item>
             {error.isError ? (
@@ -183,4 +159,4 @@ function SignupForm({ error, setError, form }) {
     )
 }
 
-export default SignupForm
+export default ChangePasswordForm

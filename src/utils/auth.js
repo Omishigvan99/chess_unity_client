@@ -92,3 +92,31 @@ export async function updateHandler({ name, email }) {
         throw new Error('Update Error')
     }
 }
+
+//change password handler
+export async function changePasswordHandler({
+    currentPassword,
+    newPassword,
+    confirmNewPassword,
+}) {
+    try {
+        const response = await axios.post(
+            import.meta.env.VITE_API_URL + '/users/change-password',
+            {
+                currentPassword: currentPassword,
+                newPassword: newPassword,
+                confirmNewPassword: confirmNewPassword,
+            },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                withCredentials: true,
+            }
+        )
+        console.log(response.data)
+    } catch (error) {
+        console.log(error)
+        throw new Error('Change Password Error')
+    }
+}

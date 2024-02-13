@@ -25,3 +25,5 @@ dist-ssr
 
 # vite env
 vite-env.d.ts
+.env
+.env.*

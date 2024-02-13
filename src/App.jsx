@@ -1,11 +1,15 @@
 import AppLayout from './AppLayout'
 import './constants/colors'
 import CustomThemeContextProvider from './context/customTheme.context'
+import StoreProvider from './store/global.store'
+
 function App() {
     return (
         <>
             <CustomThemeContextProvider>
-                <AppLayout />
+                <StoreProvider>
+                    <AppLayout />
+                </StoreProvider>
             </CustomThemeContextProvider>
         </>
     )

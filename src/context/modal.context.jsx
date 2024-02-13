@@ -1,4 +1,6 @@
 import React, { useState } from 'react'
+import Login from '../Components/modals/Login'
+import Signup from '../Components/modals/Signup'
 
 // Creating a context object and exporting it
 export const ModalContext = React.createContext({
@@ -23,6 +25,9 @@ export default function ModalContextProvider({ children }) {
             }}
         >
             {children}
+            {/* Setting up modals*/}
+            <Login></Login>
+            <Signup></Signup>
         </ModalContext.Provider>
     )
 }

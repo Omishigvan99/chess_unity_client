@@ -3,12 +3,15 @@ import { Layout, Button, Space, ConfigProvider } from 'antd'
 import { ModalContext } from '../context/modal.context'
 import { SidenavContext } from '../context/sidenav.context'
 import { MenuOutlined } from '@ant-design/icons'
+import { GlobalStore } from '../store/global.store'
+import UserProfile from './UI/UserProfile'
 
 const { Header } = Layout
 
 const HeaderNav = ({ username = ' Max', isLoggedIn }) => {
     const { collapsed, setCollapsed, broken } = useContext(SidenavContext)
     const { setOpenLogin, setOpenSignup } = useContext(ModalContext)
+    const [authState, dispatch] = useContext(GlobalStore).auth
     const { componentSize } = ConfigProvider.useConfig()
     let hideContent = false
 
@@ -37,27 +40,30 @@ const HeaderNav = ({ username = ' Max', isLoggedIn }) => {
                     size={componentSize}
                 ></Button>
             )}
-            {!hideContent && (
-                <Space style={styles.buttonContainer}>
-                    <Button
-                        type="primary"
-                        onClick={() => {
-                            setOpenLogin(true)
-                        }}
-                        size={componentSize}
-                    >
-                        Login
-                    </Button>
-                    <Button
-                        onClick={() => {
-                            setOpenSignup(true)
-                        }}
-                        size={componentSize}
-                    >
-                        Signup
-                    </Button>
-                </Space>
-            )}
+            {!hideContent &&
+                (authState.isAuthenticated ? (
+                    <UserProfile></UserProfile>
+                ) : (
+                    <Space style={styles.buttonContainer}>
+                        <Button
+                            type="primary"
+                            onClick={() => {
+                                setOpenLogin(true)
+                            }}
+                            size={componentSize}
+                        >
+                            Login
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                setOpenSignup(true)
+                            }}
+                            size={componentSize}
+                        >
+                            Signup
+                        </Button>
+                    </Space>
+                ))}
         </Header>
     )
 }

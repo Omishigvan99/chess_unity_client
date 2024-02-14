@@ -1,5 +1,10 @@
 import axios from 'axios'
 
+const errObj = function (errorResponse) {
+    this.message = errorResponse.data.title
+    this.description = errorResponse.data.message
+}
+
 // signup handler
 export async function signupHandler({ name, username, email, password }) {
     try {
@@ -21,7 +26,7 @@ export async function signupHandler({ name, username, email, password }) {
         console.log(response.data)
     } catch (error) {
         console.log(error)
-        throw new Error('Registration Error')
+        throw new errObj(error.response)
     }
 }
 
@@ -46,7 +51,7 @@ export async function loginHandler({ username, email, password }) {
         return response.data
     } catch (error) {
         console.log(error)
-        throw new Error('Login Error')
+        throw new errObj(error.response)
     }
 }
 
@@ -65,7 +70,7 @@ export async function logoutHandler() {
         )
     } catch (error) {
         console.log(error)
-        throw new Error('Logout Error')
+        throw new errObj(error.response)
     }
 }
 
@@ -89,7 +94,7 @@ export async function updateHandler({ name, email }) {
         return response.data
     } catch (error) {
         console.log(error)
-        throw new Error('Update Error')
+        throw new errObj(error.response)
     }
 }
 
@@ -117,6 +122,6 @@ export async function changePasswordHandler({
         console.log(response.data)
     } catch (error) {
         console.log(error)
-        throw new Error('Change Password Error')
+        throw new errObj(error.response)
     }
 }

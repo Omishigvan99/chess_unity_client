@@ -14,7 +14,10 @@ function SignupForm({ error, setError, form }) {
         try {
             return await form.validateFields()
         } catch {
-            throw new Error('Validation Error')
+            throw new (function () {
+                this.message = 'Validation Error'
+                this.description = 'Please check the form and submit again.'
+            })()
         }
     }
 
@@ -29,30 +32,12 @@ function SignupForm({ error, setError, form }) {
                 password: formData.password1,
             })
         } catch (error) {
-            switch (error.message) {
-                case 'Validation Error':
-                    setError({
-                        isError: true,
-                        message: 'Validation Error',
-                        description: 'Please check the form and submit again.',
-                    })
-                    break
-                case 'Registration Error':
-                    setError({
-                        isError: true,
-                        message: 'Registration Error',
-                        description: 'Username or Email already exists',
-                    })
-                    break
-                default:
-                    setError({
-                        isError: true,
-                        message: 'Unkown Error',
-                        description:
-                            'Unknown Error has occurred there is nothing wrong from your side',
-                    })
-                    break
-            }
+            setError({
+                isError: true,
+                message: error?.message || 'Unknow Error',
+                description:
+                    error?.description || 'Something went wrong while signup',
+            })
             return
         }
         openNotification(

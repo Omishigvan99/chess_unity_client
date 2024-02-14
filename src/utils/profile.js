@@ -18,6 +18,9 @@ export async function uploadProfileImage({ file }) {
         return response.data
     } catch (error) {
         console.log(error)
-        throw new Error(error.response.data.message)
+        throw new (function () {
+            this.message = error.response.data.title
+            this.description = error.response.data.description
+        })()
     }
 }

@@ -44,7 +44,10 @@ function UpdateForm() {
             let formData = await form.validateFields()
             return formData
         } catch {
-            throw new Error('Validation Error')
+            throw new (function () {
+                this.message = 'Validation Error'
+                this.description = 'Please check the form and submit again.'
+            })()
         }
     }
 
@@ -64,31 +67,13 @@ function UpdateForm() {
                 })
             )
         } catch (error) {
-            switch (error.message) {
-                case 'Validation Error':
-                    setError({
-                        isError: true,
-                        message: 'Validation Error',
-                        description: 'Please check the form and submit again.',
-                    })
-                    break
-                case 'Update Error':
-                    setError({
-                        isError: true,
-                        message: 'Update Error',
-                        description:
-                            'Something went wrong while updating the profile',
-                    })
-                    break
-                default:
-                    setError({
-                        isError: true,
-                        message: 'Unkown Error',
-                        description:
-                            'Unknown Error has occurred there is nothing wrong from your side',
-                    })
-                    break
-            }
+            setError({
+                isError: true,
+                message: error?.message || 'Unknow Error',
+                description:
+                    error?.description ||
+                    'Something went wrong while updating profile',
+            })
             return
         }
         openNotification('success', 'Update Successful', 'Profile updated')

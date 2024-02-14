@@ -14,7 +14,10 @@ function ChangePasswordForm({ error, setError, form }) {
         try {
             return await form.validateFields()
         } catch (error) {
-            throw new Error('Validation Error')
+            throw new (function () {
+                this.message = 'Validation Error'
+                this.description = 'Please check the form and submit again.'
+            })()
         }
     }
 
@@ -28,23 +31,12 @@ function ChangePasswordForm({ error, setError, form }) {
                 confirmNewPassword: formData.password2,
             })
         } catch (error) {
-            switch (error.message) {
-                case 'Validation Error':
-                    setError({
-                        isError: true,
-                        message: 'Validation Error',
-                        description: 'Please check the form and submit again.',
-                    })
-                    break
-                default:
-                    setError({
-                        isError: true,
-                        message: 'Unkown Error',
-                        description:
-                            'Unknown Error has occurred there is nothing wrong from your side',
-                    })
-                    break
-            }
+            setError({
+                isError: true,
+                message: error?.message || 'Unknow Error',
+                description:
+                    error?.description || 'Something went wrong while login in',
+            })
             return
         }
 
@@ -78,7 +70,6 @@ function ChangePasswordForm({ error, setError, form }) {
                 rules={[
                     {
                         required: true,
-                        message: 'Old Password is required',
                         pattern:
                             '^(?=.*[0-9])(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z]).{8,30}$',
                         message:

@@ -15,6 +15,17 @@ export let _2DIndexToSquare = (row, col, isReverse = false) => {
     return String.fromCharCode(97 + col) + (8 - row)
 }
 
+//convert square id to 2D index
+export let squareTo2DIndex = (square, isReverse = false) => {
+    let col = square.charCodeAt(0) - 97
+    let row = 8 - square[1]
+    if (isReverse) {
+        col = 7 - col
+        row = 7 - row
+    }
+    return [row, col]
+}
+
 //highlight all possible moves for a piece
 export const highlightPossibleMoves = (
     isEnabled,
@@ -120,7 +131,12 @@ export const removeCheck = (kingColor, pieces, callback) => {
 }
 
 //function to check if there is promotion
-export const isMovePromotional = (type, color, from, to) => {
+export const isMovePromotional = (type, color, from, to, board) => {
+    let [, col1] = squareTo2DIndex(to)
+    let [, col2] = squareTo2DIndex(from)
+
+    if (col1 === col2) return false
+
     if (type === 'p' && color === 'w' && from[1] === '7' && to[1] === '8')
         return true
     else if (type === 'p' && color === 'b' && from[1] === '2' && to[1] === '1')

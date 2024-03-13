@@ -77,7 +77,8 @@ const ChessBoard = ({
                             selectedPiece.type,
                             selectedPiece.color,
                             currentMove.from,
-                            currentMove.to
+                            currentMove.to,
+                            board
                         )
                     ) {
                         chessUtils.showPromotionModal(

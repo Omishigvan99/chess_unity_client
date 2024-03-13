@@ -84,8 +84,7 @@ export function useAuthReducer() {
             !auth.refreshToken ||
             !auth.username ||
             !auth.email ||
-            !auth.name ||
-            !auth.avatar
+            !auth.name
         )
             return
         sessionStorage.setItem('accessToken', auth.accessToken)

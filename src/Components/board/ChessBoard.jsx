@@ -23,6 +23,7 @@ const initialState = new Chess().board()
 export let remoteMove = new RemoteChessEvent()
 
 const ChessBoard = ({
+    id,
     FEN,
     options = {
         draggable: true,
@@ -166,8 +167,10 @@ const ChessBoard = ({
 
     // registering remote move event
     useEffect(() => {
-        remoteMove.on('move', (move) => {
-            performMove(move, true)
+        remoteMove.on('move', (chessboardId, move) => {
+            if (chessboardId === id) {
+                performMove(move, true)
+            }
         })
 
         //removing remote move event

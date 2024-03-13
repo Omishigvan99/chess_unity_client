@@ -3,10 +3,10 @@ export class RemoteChessEvent {
     #listenersList = []
 
     //send move to all listeners
-    sendMove(move) {
+    sendMove(chessboardId, move) {
         this.#listenersList.forEach((item) => {
             if (item.event === 'move') {
-                item.callback(move)
+                item.callback(chessboardId, move)
             }
         })
     }

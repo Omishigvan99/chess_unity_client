@@ -135,7 +135,7 @@ export const isMovePromotional = (type, color, from, to, board) => {
     let [, col1] = squareTo2DIndex(to)
     let [, col2] = squareTo2DIndex(from)
 
-    if (col1 === col2) return false
+    if (Math.abs(col1 - col2) != 1) return false
 
     if (type === 'p' && color === 'w' && from[1] === '7' && to[1] === '8')
         return true

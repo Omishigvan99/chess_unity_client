@@ -5,6 +5,7 @@ import { SidenavContext } from '../context/sidenav.context'
 import { CustomThemeContext } from '../context/customTheme.context'
 import MenuTrigger from './UI/MenuTrigger'
 import DarkTrigger from './UI/DarkTrigger'
+import { ModalContext } from '../context/modal.context'
 const { Sider } = Layout
 
 //helper function to create menu items
@@ -21,7 +22,10 @@ function getItem(label, key, icon, children) {
 const items = [
     getItem('Play', 'play', <DesktopOutlined />, [
         getItem('Play with computer', 'play-computer'),
-        getItem('Play with a friend', 'play-friend'),
+        getItem('Play with a friend', 'play-friend', null, [
+            getItem('Create Game', 'create-game'),
+            getItem('Join Game', 'join-game'),
+        ]),
         getItem('Quick Game', 'quick-game'),
     ]),
     getItem('Puzzles', 'puzzel', <UserOutlined />, [
@@ -50,6 +54,7 @@ const SideNav = () => {
     const { collapsed, setCollapsed, setBroken, broken } =
         useContext(SidenavContext)
     const [collapsedWidth, setCollapsedWidth] = useState(80)
+    const { setOpenCreateGame, setOpenJoinGame } = useContext(ModalContext)
     const { setColorStyle } = useContext(CustomThemeContext)
     const {
         token: { colorBorder },
@@ -75,6 +80,12 @@ const SideNav = () => {
                 break
             case 'dark-mode-off':
                 setColorStyle('light')
+                break
+            case 'create-game':
+                setOpenCreateGame(true)
+                break
+            case 'join-game':
+                setOpenJoinGame(true)
                 break
             default:
                 break

@@ -21,6 +21,7 @@ export default function BoardGuides({
     backgroundColor,
     foregroundColor,
     flip,
+    size,
 }) {
     return (
         <>
@@ -29,7 +30,9 @@ export default function BoardGuides({
                     display: 'grid',
                     gridTemplateColumns: '4% auto 4%',
                     gridTemplateRows: '4% auto 4%',
-                    aspectRatio: '1/1',
+                    width: size ? size : '100%',
+                    height: size ? size : '100%',
+                    aspectRatio: 1,
                 }}
             >
                 <div

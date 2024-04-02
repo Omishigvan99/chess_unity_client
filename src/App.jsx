@@ -1,4 +1,5 @@
 import AppLayout from './AppLayout'
+import { BrowserRouter } from 'react-router-dom'
 import './constants/colors'
 import CustomThemeContextProvider from './context/customTheme.context'
 import StoreProvider from './store/global.store'
@@ -6,11 +7,13 @@ import StoreProvider from './store/global.store'
 function App() {
     return (
         <>
-            <CustomThemeContextProvider>
-                <StoreProvider>
-                    <AppLayout />
-                </StoreProvider>
-            </CustomThemeContextProvider>
+            <BrowserRouter>
+                <CustomThemeContextProvider>
+                    <StoreProvider>
+                        <AppLayout />
+                    </StoreProvider>
+                </CustomThemeContextProvider>
+            </BrowserRouter>
         </>
     )
 }

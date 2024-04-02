@@ -31,15 +31,25 @@ const AppLayout = () => {
                     >
                         <SidenavContextProvider>
                             <SideNav />
-                            <Layout>
+                            <Layout
+                                style={{
+                                    ...styles.mainLayout,
+                                }}
+                            >
                                 <HeaderNav />
                                 <MainContainer />
                             </Layout>
                         </SidenavContextProvider>
-                    </Layout>                 
+                    </Layout>
                 </ModalContextProvider>
             </NotificationProvider>
         </ConfigProvider>
     )
 }
 export default AppLayout
+
+const styles = {
+    mainLayout: {
+        height: '100dvh',
+    },
+}

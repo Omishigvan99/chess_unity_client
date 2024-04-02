@@ -25,6 +25,7 @@ export let remoteMove = new RemoteChessEvent()
 const ChessBoard = ({
     id,
     FEN,
+    size,
     options = {
         draggable: true,
         clickable: true,
@@ -449,6 +450,7 @@ const ChessBoard = ({
     return (
         <>
             <BoardGuides
+                size={size}
                 backgroundColor={
                     options.guideBackgroundColor
                         ? options.guideBackgroundColor
@@ -468,7 +470,7 @@ const ChessBoard = ({
                         display: 'grid',
                         gridTemplateColumns: 'repeat(8, 1fr)',
                         gridColumn: '2 / 3',
-                        height: '100%',
+                        width: '100%',
                         aspectRatio: 1,
                     }}
                 >

@@ -9,6 +9,7 @@ import ModalContextProvider from './context/modal.context'
 import NotificationProvider from './context/notification.context'
 import SidenavContextProvider from './context/sidenav.context'
 import { CustomThemeContext } from './context/customTheme.context'
+import MessageProvider from './context/message.context'
 
 const AppLayout = () => {
     const { colorStyle } = useContext(CustomThemeContext)
@@ -23,25 +24,27 @@ const AppLayout = () => {
             }}
         >
             <NotificationProvider>
-                <ModalContextProvider>
-                    <Layout
-                        style={{
-                            display: 'flex',
-                        }}
-                    >
-                        <SidenavContextProvider>
-                            <SideNav />
-                            <Layout
-                                style={{
-                                    ...styles.mainLayout,
-                                }}
-                            >
-                                <HeaderNav />
-                                <MainContainer />
-                            </Layout>
-                        </SidenavContextProvider>
-                    </Layout>
-                </ModalContextProvider>
+                <MessageProvider>
+                    <ModalContextProvider>
+                        <Layout
+                            style={{
+                                display: 'flex',
+                            }}
+                        >
+                            <SidenavContextProvider>
+                                <SideNav />
+                                <Layout
+                                    style={{
+                                        ...styles.mainLayout,
+                                    }}
+                                >
+                                    <HeaderNav />
+                                    <MainContainer />
+                                </Layout>
+                            </SidenavContextProvider>
+                        </Layout>
+                    </ModalContextProvider>
+                </MessageProvider>
             </NotificationProvider>
         </ConfigProvider>
     )

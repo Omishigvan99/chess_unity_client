@@ -56,7 +56,7 @@ const Piece = ({
                 piece.current.removeEventListener('click', onClick)
             }
         }
-    }, [])
+    }, [options])
 
     //useGSAP hook for draggable
     useGSAP(() => {
@@ -79,7 +79,7 @@ const Piece = ({
         ) {
             draggable[0].disable()
         }
-    }, [])
+    }, [options])
     //determines which piece to render
     let pieceType = payload ? payload.color + payload.type : null
 

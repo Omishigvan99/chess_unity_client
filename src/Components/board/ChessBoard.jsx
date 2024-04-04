@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react'
 import { useMultiRef } from '../../hooks/useMultiRef.js'
 
 import BoardGuides from './BoardGuides.jsx'
@@ -97,7 +97,7 @@ const ChessBoard = ({
                 }
 
                 chess.move({ ...currentMove })
-                onmove({ ...currentMove })
+                onmove({ ...currentMove }, chess.fen(), chess.pgn())
 
                 //highlighting move played
                 chessUtils.highlightMovePlayed(
@@ -156,7 +156,8 @@ const ChessBoard = ({
                 console.log(err)
                 callback()
             }
-        }
+        },
+        [options]
     )
 
     // load fen
@@ -170,6 +171,7 @@ const ChessBoard = ({
     // registering remote move event
     useEffect(() => {
         remoteMove.on('move', (chessboardId, move) => {
+            console.log(chessboardId, move)
             if (chessboardId === id) {
                 performMove(move, true)
             }
@@ -179,7 +181,7 @@ const ChessBoard = ({
         return () => {
             remoteMove.off()
         }
-    }, [])
+    }, [options])
 
     // setting selected element to null and checking if game is over
     useEffect(() => {
@@ -198,38 +200,41 @@ const ChessBoard = ({
     }, [board])
 
     // on square click event handler
-    const onSquareClick = useCallback(function (event) {
-        const squares = getDroppables()
-        const pieces = squares
-            .filter((square) => square.children[1])
-            .map((square) => square.children[1])
+    const onSquareClick = useCallback(
+        function (event) {
+            const squares = getDroppables()
+            const pieces = squares
+                .filter((square) => square.children[1])
+                .map((square) => square.children[1])
 
-        //removing previous highlights if any
-        chessUtils.removeHighlights(squares, previousMove, checkSquare)
+            //removing previous highlights if any
+            chessUtils.removeHighlights(squares, previousMove, checkSquare)
 
-        if (!selectedPiece) return
+            if (!selectedPiece) return
 
-        let currentMove = {
-            from: selectedPiece.square,
-            to: event.currentTarget.id,
-        }
-
-        //perform move on chess board
-        performMove(
-            currentMove,
-            false,
-            () => {
-                //setting selected piece to null in global state
-                selectedPiece = null
-            },
-            () => {
-                let piece = pieces.find(
-                    (piece) => piece.dataset.square === currentMove.from
-                )
-                piece.style.zIndex = 0
+            let currentMove = {
+                from: selectedPiece.square,
+                to: event.currentTarget.id,
             }
-        )
-    }, [])
+
+            //perform move on chess board
+            performMove(
+                currentMove,
+                false,
+                () => {
+                    //setting selected piece to null in global state
+                    selectedPiece = null
+                },
+                () => {
+                    let piece = pieces.find(
+                        (piece) => piece.dataset.square === currentMove.from
+                    )
+                    piece.style.zIndex = 0
+                }
+            )
+        },
+        [options]
+    )
 
     // effect for handling click events
     useEffect(() => {
@@ -251,54 +256,58 @@ const ChessBoard = ({
                 square.onclick = null
             }
         }
-    }, [options.clickable, options.activeColor])
+    }, [options])
 
     // on piece click event handler
-    const onPieceClick = useCallback(function onPieceClick(event) {
-        const squares = getDroppables()
-        event.stopPropagation()
-        //removing previous highlights if any
-        chessUtils.removeHighlights(squares, previousMove, checkSquare)
-        if (!selectedPiece) {
-            //if piece is not of active color
-            if (
-                options.activeColor &&
-                (options.activeColor === 'w' || options.activeColor === 'b') &&
-                event.target.dataset.color !== options.activeColor
-            )
-                return
-            //highlight selected piece
-            highlightSelectedPiece(event)
-        } else {
-            let currentMove = {
-                from: selectedPiece.square,
-                to: event.target.dataset.square,
-            }
-
-            performMove(
-                currentMove,
-                false,
-                () => {
-                    //if piece is not of active color
-                    if (
-                        options.activeColor &&
-                        (options.activeColor === 'w' ||
-                            options.activeColor === 'b') &&
-                        event.target.dataset.color !== options.activeColor
-                    )
-                        return
-
-                    //highlight selected piece if another piece of same color is clicked
-                    highlightSelectedPiece(event)
-                },
-                () => {
-                    gsap.set(event.target, {
-                        zIndex: 0,
-                    })
+    const onPieceClick = useCallback(
+        function onPieceClick(event) {
+            const squares = getDroppables()
+            event.stopPropagation()
+            //removing previous highlights if any
+            chessUtils.removeHighlights(squares, previousMove, checkSquare)
+            if (!selectedPiece) {
+                //if piece is not of active color
+                if (
+                    options.activeColor &&
+                    (options.activeColor === 'w' ||
+                        options.activeColor === 'b') &&
+                    event.target.dataset.color !== options.activeColor
+                )
+                    return
+                //highlight selected piece
+                highlightSelectedPiece(event)
+            } else {
+                let currentMove = {
+                    from: selectedPiece.square,
+                    to: event.target.dataset.square,
                 }
-            )
-        }
-    }, [])
+
+                performMove(
+                    currentMove,
+                    false,
+                    () => {
+                        //if piece is not of active color
+                        if (
+                            options.activeColor &&
+                            (options.activeColor === 'w' ||
+                                options.activeColor === 'b') &&
+                            event.target.dataset.color !== options.activeColor
+                        )
+                            return
+
+                        //highlight selected piece if another piece of same color is clicked
+                        highlightSelectedPiece(event)
+                    },
+                    () => {
+                        gsap.set(event.target, {
+                            zIndex: 0,
+                        })
+                    }
+                )
+            }
+        },
+        [options]
+    )
 
     // function to highlight selected piece
     function highlightSelectedPiece(event) {
@@ -334,109 +343,118 @@ const ChessBoard = ({
     }
 
     // on drag start event handler
-    const onDragStart = useCallback(function (event) {
-        const squares = getDroppables()
+    const onDragStart = useCallback(
+        function (event) {
+            const squares = getDroppables()
 
-        //removing previous highlights if any
-        chessUtils.removeHighlights(squares, previousMove, checkSquare)
+            //removing previous highlights if any
+            chessUtils.removeHighlights(squares, previousMove, checkSquare)
 
-        //setting selected piece to global state
-        selectedPiece = {
-            type: event.target.dataset.type,
-            color: event.target.dataset.color,
-            square: event.target.dataset.square,
-        }
-
-        //highlighting possible moves
-        let legalMoves = selectedPiece.square
-            ? chess
-                  .moves({
-                      square: selectedPiece.square,
-                      verbose: true,
-                  })
-                  .map((move) => move.to)
-            : []
-
-        chessUtils.highlightPossibleMoves(
-            options.enableGuide,
-            legalMoves,
-            squares,
-            () => {
-                previousLegalMoves = legalMoves
+            //setting selected piece to global state
+            selectedPiece = {
+                type: event.target.dataset.type,
+                color: event.target.dataset.color,
+                square: event.target.dataset.square,
             }
-        )
-        //highlighting selected piece
-        chessUtils.highlightSelectedSquare(
-            event.target.offsetParent.children[0]
-        )
-    }, [])
+
+            //highlighting possible moves
+            let legalMoves = selectedPiece.square
+                ? chess
+                      .moves({
+                          square: selectedPiece.square,
+                          verbose: true,
+                      })
+                      .map((move) => move.to)
+                : []
+
+            chessUtils.highlightPossibleMoves(
+                options.enableGuide,
+                legalMoves,
+                squares,
+                () => {
+                    previousLegalMoves = legalMoves
+                }
+            )
+            //highlighting selected piece
+            chessUtils.highlightSelectedSquare(
+                event.target.offsetParent.children[0]
+            )
+        },
+        [options]
+    )
 
     // on drag end event handler
-    const onDragEnd = useCallback(function (event) {
-        const squares = getDroppables()
-        chessUtils.removeHighlights(squares, previousMove, checkSquare)
-        let callback = () => {
-            gsap.to(this.target, {
-                x: 0,
-                y: 0,
-                duration: ANIM_DURATION_1,
-                zIndex: 0,
-            })
+    const onDragEnd = useCallback(
+        function (event) {
+            const squares = getDroppables()
+            chessUtils.removeHighlights(squares, previousMove, checkSquare)
+            let callback = () => {
+                gsap.to(this.target, {
+                    x: 0,
+                    y: 0,
+                    duration: ANIM_DURATION_1,
+                    zIndex: 0,
+                })
 
-            //resetting selected piece to global state
-            selectedPiece = null
-        }
-
-        //resetting z-index on drag end from promotion case
-        let zIndexReset = () => {
-            gsap.set(this.target, {
-                zIndex: 0,
-            })
-        }
-
-        let hit = squares.find((square) => this.hitTest(square, '60%'))
-
-        if (hit) {
-            let currentMove = {
-                from: selectedPiece.square,
-                to: hit.id,
+                //resetting selected piece to global state
+                selectedPiece = null
             }
-            performMove(currentMove, false, callback, zIndexReset)
-        } else {
+
+            //resetting z-index on drag end from promotion case
+            let zIndexReset = () => {
+                gsap.set(this.target, {
+                    zIndex: 0,
+                })
+            }
+
+            let hit = squares.find((square) => this.hitTest(square, '60%'))
+
+            if (hit) {
+                let currentMove = {
+                    from: selectedPiece.square,
+                    to: hit.id,
+                }
+                performMove(currentMove, false, callback, zIndexReset)
+            } else {
+                gsap.to(this.target, {
+                    x: 0,
+                    y: 0,
+                    duration: ANIM_DURATION_1,
+                    zIndex: 0,
+                })
+            }
+
             gsap.to(this.target, {
-                x: 0,
-                y: 0,
-                duration: ANIM_DURATION_1,
                 zIndex: 0,
             })
-        }
-
-        gsap.to(this.target, {
-            zIndex: 0,
-        })
-    }, [])
+        },
+        [options]
+    )
 
     // on drag event handler
-    const onDrag = useCallback(function () {
-        const squares = getDroppables()
-        //getting selected piece from global state
-        let hit = undefined
-        for (const square of squares) {
-            hit = this.hitTest(square, '60%')
-            if (hit) {
-                chessUtils.highlightHoverSquare(square)
-            } else {
-                chessUtils.removeHoverHighlight(
-                    options.enableGuide,
-                    square,
-                    [selectedPiece.square],
-                    previousMove,
-                    previousLegalMoves,
-                    checkSquare
-                )
+    const onDrag = useCallback(
+        function () {
+            const squares = getDroppables()
+            //getting selected piece from global state
+            let hit = undefined
+            for (const square of squares) {
+                hit = this.hitTest(square, '60%')
+                if (hit) {
+                    chessUtils.highlightHoverSquare(square)
+                } else {
+                    chessUtils.removeHoverHighlight(
+                        options.enableGuide,
+                        square,
+                        [selectedPiece.square],
+                        previousMove,
+                        previousLegalMoves,
+                        checkSquare
+                    )
+                }
             }
-        }
-    }, [])
+        },
+        [options]
+    )
 
     //on promotion handler
     function onPromotionHandler(promotionMove) {
@@ -535,4 +553,4 @@ const ChessBoard = ({
     )
 }
 
-export default ChessBoard
+export default memo(ChessBoard)

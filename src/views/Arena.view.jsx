@@ -1,14 +1,15 @@
 import { useNavigate, useParams } from 'react-router'
+import { nanoid } from 'nanoid'
 import { Row, Col, Card, Space, Button } from 'antd'
 import Loading from '../Components/UI/Loading'
-import ChessBoard from '../Components/board/ChessBoard'
+import ChessBoard, { remoteMove } from '../Components/board/ChessBoard'
 import Player from '../Components/UI/Player'
 import { useContext, useEffect, useRef, useState } from 'react'
 import { useSocket } from '../hooks/useSocket'
 import { useAuthReducer } from '../store/auth.store'
 import { useSearchParams } from 'react-router-dom'
 import { NotificationContext } from '../context/notification.context'
-import { nanoid } from 'nanoid'
+import { MessageContext } from '../context/message.context'
 import { getRoomDetails, joinRoom } from '../utils/rooms'
 
 /**
@@ -21,6 +22,7 @@ function ArenaView() {
     const navigate = useNavigate()
     const [auth, _] = useAuthReducer()
     const { openNotification } = useContext(NotificationContext)
+    const { success, error } = useContext(MessageContext)
     const guestId = nanoid(20)
     const [player, setPlayer] = useState(
         auth.isAuthenticated
@@ -66,7 +68,7 @@ function ArenaView() {
                     rating: data.rating,
                     isConnected: true,
                 })
-                openNotification('success', 'Opponent Connected', data.name)
+                success(`${data.name} connected`)
             }
         })
 
@@ -81,9 +83,19 @@ function ArenaView() {
                         isConnected: false,
                     }
                 })
-                openNotification('error', 'Opponent Disconnected', data.name)
+                console.log(data)
+                error(`${data.name} disconnected`)
             }
         })
+
+        // listen for 'move' events from the server.
+        socket.on('move', (move) => {
+            move = JSON.parse(move)
+            console.log(move)
+            // Emit the move to the remote chess event listeners.
+            remoteMove.sendMove(params.roomId, move)
+        })
+
         // Return a cleanup function to run when the component unmounts.
         return () => {
             // Remove all listeners from the socket to prevent memory leaks.
@@ -91,7 +103,7 @@ function ArenaView() {
         }
     }, [player, opponent])
 
-    // This useEffect hook is used to handle the socket connection and room joining when the component mounts.
+    // This useEffect hook is used to handle room joining when the component mounts.
     useEffect(() => {
         // If there is no socket connection or room ID, exit the function.
         if (!socket || !params.roomId || hasJoined) return
@@ -151,10 +163,10 @@ function ArenaView() {
 
                 setIsLoading(false)
                 setHasJoined(true)
-                openNotification('success', 'Joined Room', response.message)
+                success('Joined Room Successfully')
             } catch (error) {
                 console.error(error)
-                openNotification('error', 'Failed to join Room', error.message)
+                error('Failed to join Room')
             }
         })()
 
@@ -194,23 +206,38 @@ function ArenaView() {
         socket.emit(
             'leave-room',
             JSON.stringify({
-                roomId: params.roomId, // The ID of the room the player is leaving.
-                playerId: player.id, // The ID of the player who is leaving.
-                isGuest: !auth.isAuthenticated, // Whether the player is a guest or not.
+                roomId: params.roomId,
+                playerId: player.id,
+                name: player.name,
+                rating: player.rating,
+                isGuest: !auth.isAuthenticated,
             }),
             // Callback function to handle the server response.
             (response) => {
-                // Log the server response.
-                console.log(response)
                 // Show a notification that the room was left successfully.
-                openNotification(
-                    response.success ? 'success' : 'error',
-                    response.success ? 'left Room' : 'Failed to leave Room',
-                    response.message
-                )
+                if (response.success) {
+                    success('Left Room Successfully')
+                } else {
+                    // Show a notification that there was an error leaving the room.
+                    error('Failed to Leave Room')
+                }
                 // Navigate to the home page.
                 navigate('/')
             }
+        )
+    }
+
+    // This function is used to handle the event when a player makes a move on the chessboard.
+    const onMoveHandler = (move, FEN, pgn) => {
+        socket.emit(
+            'move',
+            JSON.stringify({
+                roomId: params.roomId,
+                isGuest: !auth.isAuthenticated,
+                move: move,
+                FEN: FEN,
+                pgn: pgn,
+            })
         )
     }
 
@@ -255,10 +282,17 @@ function ArenaView() {
                             isConnected={opponent.isConnected}
                         ></Player>
                         <ChessBoard
+                            id={params.roomId}
                             size={size}
                             options={{
-                                flip: player.color === 'black',
+                                flip: player.color === 'black' ? true : false,
+                                draggable: opponent.isConnected,
+                                clickable: opponent.isConnected,
+                                activeColor:
+                                    player.color === 'black' ? 'b' : 'w',
+                                enableGuide: true,
                             }}
+                            onmove={onMoveHandler}
                         ></ChessBoard>
                         <Player
                             name={player.name}

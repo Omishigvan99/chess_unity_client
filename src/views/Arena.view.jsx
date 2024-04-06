@@ -11,6 +11,7 @@ import { useSearchParams } from 'react-router-dom'
 import { NotificationContext } from '../context/notification.context'
 import { MessageContext } from '../context/message.context'
 import { getRoomDetails, joinRoom } from '../utils/rooms'
+import { GlobalStore } from '../store/global.store'
 
 /**
  * ArenaView component is used to display the game arena where players can play chess.
@@ -20,27 +21,13 @@ function ArenaView() {
     const params = useParams()
     const [searchParams] = useSearchParams()
     const navigate = useNavigate()
-    const [auth, _] = useAuthReducer()
-    const { openNotification } = useContext(NotificationContext)
+    const [auth, _, guestId] = useContext(GlobalStore).auth
     const { success, error } = useContext(MessageContext)
-    const guestId = nanoid(20)
-    const [player, setPlayer] = useState(
-        auth.isAuthenticated
-            ? {
-                  id: searchParams.get('hostId') || nanoid(),
-                  name: auth.username,
-                  rating: 1000,
-                  color: null,
-              }
-            : {
-                  id: searchParams.get('hostId') || guestId,
-                  name: searchParams.get('hostId')
-                      ? `Guest:${searchParams.get('hostId')}`
-                      : `Guest-${guestId}`,
-                  rating: 1000,
-                  color: null,
-              }
-    )
+    const [player, setPlayer] = useState({
+        id: null,
+        name: null,
+        rating: 1000,
+    })
     const [opponent, setOpponent] = useState({
         id: null,
         name: null,
@@ -55,6 +42,18 @@ function ArenaView() {
     const colContainer = useRef(null)
     const socket = useSocket('/p2p')
 
+    // This useEffect hook is to set current player
+    useEffect(() => {
+        setPlayer((prevState) => {
+            return {
+                ...prevState,
+                id: auth.isAuthenticated ? auth.id : guestId,
+                name: auth.isAuthenticated ? auth.name : 'Guest:' + guestId,
+                avatar: auth.avatar,
+            }
+        })
+    }, [auth.isAuthenticated])
+
     // This useEffect hook is used to handle the socket events for user connection and disconnection.
     useEffect(() => {
         // Listen for 'user-connected' events from the server.
@@ -66,6 +65,7 @@ function ArenaView() {
                     id: data.id,
                     name: data.name,
                     rating: data.rating,
+                    avatar: data.avatar,
                     isConnected: true,
                 })
                 success(`${data.name} connected`)
@@ -91,7 +91,6 @@ function ArenaView() {
         // listen for 'move' events from the server.
         socket.on('move', (move) => {
             move = JSON.parse(move)
-            console.log(move)
             // Emit the move to the remote chess event listeners.
             remoteMove.sendMove(params.roomId, move)
         })
@@ -106,7 +105,7 @@ function ArenaView() {
     // This useEffect hook is used to handle room joining when the component mounts.
     useEffect(() => {
         // If there is no socket connection or room ID, exit the function.
-        if (!socket || !params.roomId || hasJoined) return
+        if (!socket || !params.roomId || !player.id || hasJoined) return
         ;(async () => {
             try {
                 // Set the loading state to true.
@@ -122,9 +121,11 @@ function ArenaView() {
                     playerId: player.id,
                     rating: player.rating,
                     name: player.name,
+                    avatar: player.avatar,
                     isGuest: !auth.isAuthenticated,
                     color: !response.data?.players.white ? 'white' : 'black',
                 })
+                console.log(response)
 
                 //set the opponent state with the opponent data from the server response.
                 if (
@@ -135,6 +136,7 @@ function ArenaView() {
                         id: response.data.players.white.id,
                         name: response.data.players.white.name,
                         rating: response.data.players.white.rating,
+                        avatar: response.data.players.white.avatar,
                         isConnected: true,
                     })
                     setPlayer((prevState) => {
@@ -151,6 +153,7 @@ function ArenaView() {
                         id: response.data.players.black.id,
                         name: response.data.players.black.name,
                         rating: response.data.players.black.rating,
+                        avatar: response.data.players.black.avatar,
                         isConnected: true,
                     })
                     setPlayer((prevState) => {
@@ -164,14 +167,15 @@ function ArenaView() {
                 setIsLoading(false)
                 setHasJoined(true)
                 success('Joined Room Successfully')
-            } catch (error) {
-                console.error(error)
+            } catch (err) {
+                console.log(err)
+                setIsLoading(false)
                 error('Failed to join Room')
             }
         })()
 
         // The effect hook depends on the room ID from the component's parameters.
-    }, [params.roomId])
+    }, [params.roomId, player])
 
     // This useEffect hook is used to handle the resizing of the row and column containers.
     useEffect(() => {
@@ -214,6 +218,8 @@ function ArenaView() {
             }),
             // Callback function to handle the server response.
             (response) => {
+                // Log the response to the console.
+                console.log(response)
                 // Show a notification that the room was left successfully.
                 if (response.success) {
                     success('Left Room Successfully')
@@ -280,6 +286,7 @@ function ArenaView() {
                             name={opponent.name}
                             rating={opponent.rating}
                             isConnected={opponent.isConnected}
+                            imageSrc={opponent.avatar}
                         ></Player>
                         <ChessBoard
                             id={params.roomId}
@@ -297,6 +304,7 @@ function ArenaView() {
                         <Player
                             name={player.name}
                             rating={player.rating}
+                            imageSrc={auth.avatar}
                         ></Player>
                     </Space>
                 </Col>

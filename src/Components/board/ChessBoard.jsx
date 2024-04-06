@@ -157,7 +157,7 @@ const ChessBoard = ({
                 callback()
             }
         },
-        [options]
+        [options.flip, options.activeColor, options.enableGuide]
     )
 
     // load fen
@@ -171,7 +171,6 @@ const ChessBoard = ({
     // registering remote move event
     useEffect(() => {
         remoteMove.on('move', (chessboardId, move) => {
-            console.log(chessboardId, move)
             if (chessboardId === id) {
                 performMove(move, true)
             }
@@ -181,7 +180,7 @@ const ChessBoard = ({
         return () => {
             remoteMove.off()
         }
-    }, [options])
+    }, [performMove, id])
 
     // setting selected element to null and checking if game is over
     useEffect(() => {
@@ -233,7 +232,12 @@ const ChessBoard = ({
                 }
             )
         },
-        [options]
+        [
+            options.flip,
+            options.clickable,
+            options.activeColor,
+            options.enableGuide,
+        ]
     )
 
     // effect for handling click events
@@ -256,7 +260,7 @@ const ChessBoard = ({
                 square.onclick = null
             }
         }
-    }, [options])
+    }, [options.flip, options.clickable])
 
     // on piece click event handler
     const onPieceClick = useCallback(
@@ -306,7 +310,12 @@ const ChessBoard = ({
                 )
             }
         },
-        [options]
+        [
+            options.activeColor,
+            options.flip,
+            options.enableGuide,
+            options.clickable,
+        ]
     )
 
     // function to highlight selected piece
@@ -380,7 +389,12 @@ const ChessBoard = ({
                 event.target.offsetParent.children[0]
             )
         },
-        [options]
+        [
+            options.flip,
+            options.activeColor,
+            options.enableGuide,
+            options.draggable,
+        ]
     )
 
     // on drag end event handler
@@ -428,13 +442,20 @@ const ChessBoard = ({
                 zIndex: 0,
             })
         },
-        [options]
+        [
+            options.activeColor,
+            options.flip,
+            options.enableGuide,
+            options.draggable,
+        ]
     )
 
     // on drag event handler
     const onDrag = useCallback(
         function () {
             const squares = getDroppables()
+            console.log('Drag')
+
             //getting selected piece from global state
             let hit = undefined
             for (const square of squares) {
@@ -453,7 +474,12 @@ const ChessBoard = ({
                 }
             }
         },
-        [options]
+        [
+            options.activeColor,
+            options.flip,
+            options.enableGuide,
+            options.draggable,
+        ]
     )
 
     //on promotion handler

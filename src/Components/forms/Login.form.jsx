@@ -34,10 +34,10 @@ function LoginForm({ form, error, setError }) {
                 username: formData['username/email'],
                 password: formData.password,
             })
-
             // dispatching the login action
             dispatch(
                 setUser({
+                    id: responseData.data.user._id,
                     username: responseData.data.user.username,
                     email: responseData.data.user.email,
                     name: responseData.data.user.name,

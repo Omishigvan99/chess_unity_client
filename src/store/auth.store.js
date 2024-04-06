@@ -1,8 +1,10 @@
-import { useEffect, useReducer } from 'react'
+import { nanoid } from 'nanoid'
+import { useEffect, useReducer, useState } from 'react'
 
 //initial auth store state
 const initialState = {
     isAuthenticated: false,
+    id: null,
     username: null,
     email: null,
     name: null,
@@ -34,6 +36,7 @@ function reducer(state, action) {
             sessionStorage.clear()
             return {
                 isAuthenticated: false,
+                id: null,
                 username: null,
                 email: null,
                 name: null,
@@ -53,6 +56,7 @@ function reducer(state, action) {
 
 export function useAuthReducer() {
     const [auth, dispatch] = useReducer(reducer, initialState)
+    const [guestId] = useState(nanoid(20))
 
     //get user from session storage
     useEffect(() => {
@@ -62,10 +66,12 @@ export function useAuthReducer() {
         const email = sessionStorage.getItem('email')
         const name = sessionStorage.getItem('name')
         const avatar = sessionStorage.getItem('avatar')
+        const id = sessionStorage.getItem('id')
 
         if (accessToken && refreshToken && username && email && name) {
             dispatch(
                 setUser({
+                    id: id,
                     username: username,
                     email: email,
                     name: name,
@@ -80,6 +86,7 @@ export function useAuthReducer() {
     //set user to session storage
     useEffect(() => {
         if (
+            !auth.id ||
             !auth.accessToken ||
             !auth.refreshToken ||
             !auth.username ||
@@ -87,6 +94,7 @@ export function useAuthReducer() {
             !auth.name
         )
             return
+        sessionStorage.setItem('id', auth.id)
         sessionStorage.setItem('accessToken', auth.accessToken)
         sessionStorage.setItem('refreshToken', auth.refreshToken)
         sessionStorage.setItem('username', auth.username)
@@ -94,5 +102,5 @@ export function useAuthReducer() {
         sessionStorage.setItem('name', auth.name)
         sessionStorage.setItem('avatar', auth.avatar)
     }, [auth])
-    return [auth, dispatch]
+    return [auth, dispatch, guestId]
 }

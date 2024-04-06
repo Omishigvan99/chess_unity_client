@@ -4,7 +4,7 @@ import { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { ModalContext } from '../../context/modal.context'
 
-function CreateGameForm({ link, roomId, hostId }) {
+function CreateGameForm({ link, roomId }) {
     const [form] = Form.useForm()
     const { setOpenCreateGame } = useContext(ModalContext)
     const [selectedPiece, setSelectedPiece] = useState(3)
@@ -31,7 +31,7 @@ function CreateGameForm({ link, roomId, hostId }) {
     // form submit handler
     const onStartGameHandler = () => {
         if (!roomId) return
-        navigate(`/arena/${roomId}?hostId=${hostId}`)
+        navigate(`/arena/${roomId}`)
         form.resetFields()
         setIsCopied(false)
         setOpenCreateGame(false)

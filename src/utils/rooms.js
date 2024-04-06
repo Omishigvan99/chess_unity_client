@@ -1,6 +1,5 @@
 // Importing axios for making HTTP requests
 import axios from 'axios'
-import { nanoid } from 'nanoid'
 
 /**
  * Asynchronously creates a new room.
@@ -9,7 +8,7 @@ import { nanoid } from 'nanoid'
  * @returns {Promise} - Returns a promise that resolves to the value of the created room.
  * @throws {Error} - Throws an error if the request fails.
  */
-export async function createRoom(isAuthenticated) {
+export async function createRoom(isAuthenticated, hostId) {
     try {
         // Making a GET request to the 'create-room' endpoint of the API
         const response = await axios.get(
@@ -17,7 +16,7 @@ export async function createRoom(isAuthenticated) {
             {
                 params: {
                     guest: !isAuthenticated,
-                    hostId: !isAuthenticated ? nanoid(20) : null,
+                    hostId: hostId,
                 },
             }
         )

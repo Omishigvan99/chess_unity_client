@@ -5,10 +5,11 @@ import { useNavigate } from 'react-router'
 import { getRoomDetails } from '../../utils/rooms'
 import { useSocket } from '../../hooks/useSocket'
 import { useAuthReducer } from '../../store/auth.store'
+import { GlobalStore } from '../../store/global.store'
 
 function JoinGameForm() {
     const [form] = Form.useForm()
-    const auth = useAuthReducer()
+    const [auth] = useContext(GlobalStore).auth
     const { setOpenJoinGame } = useContext(ModalContext)
     const [error, setError] = useState({
         isError: false,
@@ -48,7 +49,11 @@ function JoinGameForm() {
                 navigate(`/arena/${code}`)
             } else {
                 const code = formData['user-code']
-                console.log('Code:', code)
+                await getRoomDetails(socket, {
+                    roomId: code,
+                    isGuest: !auth.isAuthenticated,
+                })
+                navigate(`/arena/${code}`)
             }
         } catch (error) {
             setError({

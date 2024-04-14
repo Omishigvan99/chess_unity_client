@@ -97,7 +97,10 @@ const ChessBoard = ({
                 }
 
                 chess.move({ ...currentMove })
-                onmove({ ...currentMove }, chess.fen(), chess.pgn())
+
+                if (!isRemoteMove) {
+                    onmove({ ...currentMove }, chess.fen(), chess.pgn())
+                }
 
                 //highlighting move played
                 chessUtils.highlightMovePlayed(
@@ -180,7 +183,14 @@ const ChessBoard = ({
         return () => {
             remoteMove.off()
         }
-    }, [performMove, id])
+    }, [
+        options.flip,
+        options.activeColor,
+        options.enableGuide,
+        options.draggable,
+        options.clickable,
+        id,
+    ])
 
     // setting selected element to null and checking if game is over
     useEffect(() => {

@@ -1,14 +1,11 @@
 import { useNavigate, useParams } from 'react-router'
-import { nanoid } from 'nanoid'
 import { Row, Col, Card, Space, Button } from 'antd'
 import Loading from '../Components/UI/Loading'
 import ChessBoard, { remoteMove } from '../Components/board/ChessBoard'
 import Player from '../Components/UI/Player'
 import { useContext, useEffect, useRef, useState } from 'react'
 import { useSocket } from '../hooks/useSocket'
-import { useAuthReducer } from '../store/auth.store'
 import { useSearchParams } from 'react-router-dom'
-import { NotificationContext } from '../context/notification.context'
 import { MessageContext } from '../context/message.context'
 import { getRoomDetails, joinRoom } from '../utils/rooms'
 import { GlobalStore } from '../store/global.store'
@@ -35,7 +32,7 @@ function ArenaView() {
         isConnected: false,
         color: null,
     })
-    const [hasJoined, setHasJoined] = useState(false)
+    const [isPlayerInRoom, setIsPlayerInRoom] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
     const [size, setSize] = useState(null)
     const rowContainer = useRef(null)
@@ -52,7 +49,7 @@ function ArenaView() {
                 avatar: auth.avatar,
             }
         })
-    }, [auth.isAuthenticated])
+    }, [auth.isAuthenticated, guestId])
 
     // This useEffect hook is used to handle the socket events for user connection and disconnection.
     useEffect(() => {
@@ -89,7 +86,7 @@ function ArenaView() {
         })
 
         // listen for 'move' events from the server.
-        socket.on('move', (move) => {
+        socket.on('remote-move', (move) => {
             move = JSON.parse(move)
             // Emit the move to the remote chess event listeners.
             remoteMove.sendMove(params.roomId, move)
@@ -104,77 +101,118 @@ function ArenaView() {
 
     // This useEffect hook is used to handle room joining when the component mounts.
     useEffect(() => {
-        // If there is no socket connection or room ID, exit the function.
-        if (!socket || !params.roomId || !player.id || hasJoined) return
+        // Check if necessary dependencies are present and if the player is already in the room.
+        if (!socket || !params.roomId || !player.id || isPlayerInRoom)
+            return // Asynchronous function to handle room joining logic.
         ;(async () => {
             try {
-                // Set the loading state to true.
+                // Set loading state to true to indicate loading state.
                 setIsLoading(true)
-                let response = await getRoomDetails(socket, {
+
+                // Fetch room details from the server.
+                const response = await getRoomDetails(socket, {
                     roomId: params.roomId,
                     isGuest: !auth.isAuthenticated,
                 })
 
-                // Update the room state with the room data from the server response after successful joining.
-                response = await joinRoom(socket, {
-                    roomId: params.roomId,
-                    playerId: player.id,
-                    rating: player.rating,
-                    name: player.name,
-                    avatar: player.avatar,
-                    isGuest: !auth.isAuthenticated,
-                    color: !response.data?.players.white ? 'white' : 'black',
-                })
-                console.log(response)
+                let opponent = null
 
-                //set the opponent state with the opponent data from the server response.
+                // check if opponent exists in the room and is of color other than the player.
                 if (
                     response.data.players.white &&
-                    response.data.players.white.id !== player.id
+                    response.data.players.white?.id !== player.id
                 ) {
-                    setOpponent({
-                        id: response.data.players.white.id,
-                        name: response.data.players.white.name,
-                        rating: response.data.players.white.rating,
-                        avatar: response.data.players.white.avatar,
-                        isConnected: true,
-                    })
-                    setPlayer((prevState) => {
-                        return {
-                            ...prevState,
-                            color: 'black',
-                        }
-                    })
-                } else if (
+                    opponent = response.data.players.white
+                }
+
+                if (
                     response.data.players.black &&
-                    response.data.players.black.id !== player.id
+                    response.data.players.black?.id !== player.id
                 ) {
+                    opponent = response.data.players.black
+                }
+
+                // If opponent exists, set opponent state.
+                if (opponent) {
                     setOpponent({
-                        id: response.data.players.black.id,
-                        name: response.data.players.black.name,
-                        rating: response.data.players.black.rating,
-                        avatar: response.data.players.black.avatar,
+                        id: opponent.id,
+                        name: opponent.name,
+                        rating: opponent.rating,
+                        avatar: opponent.avatar,
                         isConnected: true,
-                    })
-                    setPlayer((prevState) => {
-                        return {
-                            ...prevState,
-                            color: 'white',
-                        }
                     })
                 }
 
+                // Check if the player is already in the room as white or black.
+                const isPlayerWhite =
+                    response.data.players.white?.id === player.id
+                const isPlayerBlack =
+                    response.data.players.black?.id === player.id
+
+                if (isPlayerWhite || isPlayerBlack) {
+                    // Player is already in the room.
+                    console.log('Player already in room')
+                    setIsLoading(false)
+
+                    // Determine player's color.
+                    const playerColor = isPlayerWhite ? 'white' : 'black'
+
+                    // Join the room with player details.
+                    await joinRoom(socket, {
+                        roomId: params.roomId,
+                        playerId: player.id,
+                        name: player.name,
+                        rating: player.rating,
+                        avatar: player.avatar,
+                        isGuest: !auth.isAuthenticated,
+                        color: playerColor,
+                    })
+
+                    // Update player's color and set player in room state.
+                    setPlayer((prevState) => ({
+                        ...prevState,
+                        color: playerColor,
+                    }))
+                    setIsPlayerInRoom(true)
+
+                    // Display success message.
+                    success('Joined Room Successfully')
+                    return
+                }
+
+                // Determine player's color based on current room state.
+                const playerColor = response.data.players.white
+                    ? 'black'
+                    : 'white'
+
+                // Join the room with player details.
+                await joinRoom(socket, {
+                    roomId: params.roomId,
+                    playerId: player.id,
+                    name: player.name,
+                    rating: player.rating,
+                    avatar: player.avatar,
+                    isGuest: !auth.isAuthenticated,
+                    color: playerColor,
+                })
+
+                // Update player's color and set player in room state.
+                setPlayer((prevState) => ({
+                    ...prevState,
+                    color: playerColor,
+                }))
                 setIsLoading(false)
-                setHasJoined(true)
+                setIsPlayerInRoom(true)
+
+                // Display success message.
                 success('Joined Room Successfully')
             } catch (err) {
+                // Log error and update loading state to indicate failure.
                 console.log(err)
                 setIsLoading(false)
                 error('Failed to join Room')
             }
         })()
-
-        // The effect hook depends on the room ID from the component's parameters.
     }, [params.roomId, player])
 
     // This useEffect hook is used to handle the resizing of the row and column containers.
@@ -235,6 +273,7 @@ function ArenaView() {
 
     // This function is used to handle the event when a player makes a move on the chessboard.
     const onMoveHandler = (move, FEN, pgn) => {
+        console.log(move)
         socket.emit(
             'move',
             JSON.stringify({

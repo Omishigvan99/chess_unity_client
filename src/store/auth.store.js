@@ -14,7 +14,6 @@ const initialState = {
 }
 
 // constants to be used in the reducer function
-const LOGIN = 'LOGIN'
 const LOGOUT = 'LOGOUT'
 const SET_USER = 'SET_USER'
 
@@ -56,7 +55,7 @@ function reducer(state, action) {
 
 export function useAuthReducer() {
     const [auth, dispatch] = useReducer(reducer, initialState)
-    const [guestId] = useState(nanoid(20))
+    const [guestId, setGuestId] = useState(null)
 
     //get user from session storage
     useEffect(() => {
@@ -102,5 +101,19 @@ export function useAuthReducer() {
         sessionStorage.setItem('name', auth.name)
         sessionStorage.setItem('avatar', auth.avatar)
     }, [auth])
+
+    //set guest id to session storage
+    useEffect(() => {
+        //check if guest id is already set
+        const guestId = sessionStorage.getItem('guestId')
+        if (!guestId) {
+            const id = nanoid(20)
+            sessionStorage.setItem('guestId', id)
+            setGuestId(id)
+        } else {
+            setGuestId(guestId)
+        }
+    }, [])
+    
     return [auth, dispatch, guestId]
 }

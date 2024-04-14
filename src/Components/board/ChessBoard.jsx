@@ -26,6 +26,7 @@ const ChessBoard = ({
     id,
     FEN,
     size,
+    previousPlayedMove,
     options = {
         draggable: true,
         clickable: true,
@@ -165,11 +166,29 @@ const ChessBoard = ({
 
     // load fen
     useEffect(() => {
-        if (FEN) {
+        if (FEN && FEN !== chess.fen()) {
             chess.load(FEN)
             setBoard(chess.board())
         }
-    }, [FEN])
+    }, [FEN, options.flip, options.activeColor, options.enableGuide])
+
+    // load current move
+    useEffect(() => {
+        if (!previousPlayedMove) return
+        const squares = getDroppables()
+        chessUtils.highlightMovePlayed(
+            [previousPlayedMove.from, previousPlayedMove.to],
+            squares,
+            () => {
+                previousMove = [previousPlayedMove.from, previousPlayedMove.to]
+            }
+        )
+    }, [
+        previousPlayedMove,
+        options.flip,
+        options.activeColor,
+        options.enableGuide,
+    ])
 
     // registering remote move event
     useEffect(() => {

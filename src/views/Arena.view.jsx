@@ -38,6 +38,9 @@ function ArenaView() {
     const rowContainer = useRef(null)
     const colContainer = useRef(null)
     const socket = useSocket('/p2p')
+    const [roomBoardState, setRoomBoardState] = useState(null)
+    const [previousMove, setPreviousMove] = useState(null)
+    const [movesList, setMovesList] = useState([])
 
     // This useEffect hook is to set current player
     useEffect(() => {
@@ -114,6 +117,14 @@ function ArenaView() {
                     roomId: params.roomId,
                     isGuest: !auth.isAuthenticated,
                 })
+
+                //setting board state based on current room state
+                if (response.data.board && response.data.previousMove) {
+                    // Set the board state to the current board state.
+                    setRoomBoardState(response.data.board)
+                    // Set the previous move to the current previous move.
+                    setPreviousMove(response.data.previousMove)
+                }
 
                 let opponent = null
 
@@ -218,7 +229,7 @@ function ArenaView() {
     // This useEffect hook is used to handle the resizing of the row and column containers.
     useEffect(() => {
         // If the row or column container refs are not set, exit the function.
-        if (!rowContainer.current || !colContainer.current) return
+        if (!rowContainer.current || !colContainer.current || isLoading) return
 
         // Create a new ResizeObserver that updates the size state based on the dimensions of the row and column containers.
         const resizeObserver = new ResizeObserver(() => {
@@ -239,7 +250,7 @@ function ArenaView() {
             resizeObserver.disconnect()
         }
         // The effect hook depends on the row and column container refs.
-    }, [rowContainer, colContainer])
+    }, [rowContainer, colContainer, isLoading])
 
     // This function is used to handle the event when a player leaves a room.
     const leaveRoomHandler = () => {
@@ -288,81 +299,75 @@ function ArenaView() {
 
     return (
         <>
-            <Loading
-                isloading={isLoading}
-                style={{
-                    position: 'absolute',
-                    top: '0',
-                    left: '0',
-                    width: '100%',
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    zIndex: '2',
-                }}
-            />
-            <Row
-                ref={rowContainer}
-                gutter={[12, 12]}
-                style={{
-                    height: 'calc(100dvh - 100px)',
-                }}
-            >
-                <Col
-                    ref={colContainer}
-                    xs={24}
-                    sm={24}
-                    md={14}
-                    xl={16}
-                    xxl={16}
+            <Loading isloading={isLoading}>
+                <Row
+                    ref={rowContainer}
+                    gutter={[12, 12]}
+                    style={{
+                        height: 'calc(100dvh - 100px)',
+                    }}
                 >
-                    <Space
-                        style={{
-                            height: '100%',
-                            width: '100%',
-                        }}
-                        direction="vertical"
+                    <Col
+                        ref={colContainer}
+                        xs={24}
+                        sm={24}
+                        md={14}
+                        xl={16}
+                        xxl={16}
                     >
-                        <Player
-                            name={opponent.name}
-                            rating={opponent.rating}
-                            isConnected={opponent.isConnected}
-                            imageSrc={opponent.avatar}
-                        ></Player>
-                        <ChessBoard
-                            id={params.roomId}
-                            size={size}
-                            options={{
-                                flip: player.color === 'black' ? true : false,
-                                draggable: opponent.isConnected,
-                                clickable: opponent.isConnected,
-                                activeColor:
-                                    player.color === 'black' ? 'b' : 'w',
-                                enableGuide: true,
+                        <Space
+                            style={{
+                                height: '100%',
+                                width: '100%',
                             }}
-                            onmove={onMoveHandler}
-                        ></ChessBoard>
-                        <Player
-                            name={player.name}
-                            rating={player.rating}
-                            imageSrc={auth.avatar}
-                        ></Player>
-                    </Space>
-                </Col>
-                <Col xs={24} sm={24} md={10} xl={8} xxl={8}>
-                    <Card
-                        style={{
-                            height: '100%',
-                        }}
-                    >
-                        <Button
-                            danger
-                            type="primary"
-                            onClick={leaveRoomHandler}
+                            direction="vertical"
                         >
-                            Leave Room
-                        </Button>
-                    </Card>
-                </Col>
-            </Row>
+                            <Player
+                                name={opponent.name}
+                                rating={opponent.rating}
+                                isConnected={opponent.isConnected}
+                                imageSrc={opponent.avatar}
+                            ></Player>
+                            <ChessBoard
+                                id={params.roomId}
+                                size={size}
+                                FEN={roomBoardState}
+                                previousPlayedMove={previousMove}
+                                options={{
+                                    flip:
+                                        player.color === 'black' ? true : false,
+                                    draggable: opponent.isConnected,
+                                    clickable: opponent.isConnected,
+                                    activeColor:
+                                        player.color === 'black' ? 'b' : 'w',
+                                    enableGuide: true,
+                                }}
+                                onmove={onMoveHandler}
+                            ></ChessBoard>
+                            <Player
+                                name={player.name}
+                                rating={player.rating}
+                                imageSrc={auth.avatar}
+                            ></Player>
+                        </Space>
+                    </Col>
+                    <Col xs={24} sm={24} md={10} xl={8} xxl={8}>
+                        <Card
+                            style={{
+                                height: '100%',
+                            }}
+                        >
+                            <Button
+                                danger
+                                type="primary"
+                                onClick={leaveRoomHandler}
+                            >
+                                Leave Room
+                            </Button>
+                        </Card>
+                    </Col>
+                </Row>
+            </Loading>
         </>
     )
 }

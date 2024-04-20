@@ -91,6 +91,8 @@ function ArenaView() {
         // listen for 'move' events from the server.
         socket.on('remote-move', (move) => {
             move = JSON.parse(move)
+            // add the move to the moves list.
+            setMovesList((prevState) => [...prevState, move.to])
             // Emit the move to the remote chess event listeners.
             remoteMove.sendMove(params.roomId, move)
         })
@@ -295,6 +297,34 @@ function ArenaView() {
                 pgn: pgn,
             })
         )
+        setMovesList((prevState) => [...prevState, move.to])
+    }
+
+    // This function is used to handle the event when a player wins the game by checkmate.
+    const onCheckmateHandler = (color) => {
+        success(`${color} wins by checkmate`)
+        //TODO: handle checkmate
+    }
+
+    // This function is used to handle the event when a player wins the game by stalemate.
+    const onStalemateHandler = () => {
+        console.log('Stalemate')
+        success('Stalemate')
+        //TODO: handle stalemate
+    }
+
+    // This function is used to handle the event when a player wins the game by insufficient material.
+    const onInsufficientMaterialHandler = () => {
+        console.log('Insufficient Material')
+        success('Insufficient Material')
+        //TODO: handle insufficient material
+    }
+
+    // This function is used to handle the event when a player wins the game by threefold repetition.
+    const onThreefoldRepetitionHandler = () => {
+        console.log('Threefold Repetition')
+        success('Threefold Repetition')
+        //TODO: handle threefold repetition
     }
 
     return (
@@ -343,6 +373,14 @@ function ArenaView() {
                                     enableGuide: true,
                                 }}
                                 onmove={onMoveHandler}
+                                onCheckmate={onCheckmateHandler}
+                                onInsufficientMaterial={
+                                    onInsufficientMaterialHandler
+                                }
+                                onStalemate={onStalemateHandler}
+                                onThreefoldRepetition={
+                                    onThreefoldRepetitionHandler
+                                }
                             ></ChessBoard>
                             <Player
                                 name={player.name}

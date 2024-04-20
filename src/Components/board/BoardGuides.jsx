@@ -95,7 +95,7 @@ export default function BoardGuides({
                         flexDirection: 'column',
                     }}
                 >
-                    {(flip ? reverseArray(ranks) : ranks).map((rank) => {
+                    {(flip ? ranks : reverseArray(ranks)).map((rank) => {
                         return (
                             <span key={rank} style={styles.guideBarItems}>
                                 <Text foregroundColor={foregroundColor}>

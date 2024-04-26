@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from 'react-router'
-import { Row, Col, Card, Space, Button } from 'antd'
+import { Row, Col, Card, Space, Button, Divider } from 'antd'
 import Loading from '../Components/UI/Loading'
 import ChessBoard, { remoteMove } from '../Components/board/ChessBoard'
 import Player from '../Components/UI/Player'
@@ -9,6 +9,8 @@ import { useSearchParams } from 'react-router-dom'
 import { MessageContext } from '../context/message.context'
 import { getRoomDetails, joinRoom } from '../utils/rooms'
 import { GlobalStore } from '../store/global.store'
+import ActionsTab from '../Components/UI/ActionsTab'
+import { ModalContext } from '../context/modal.context'
 
 /**
  * ArenaView component is used to display the game arena where players can play chess.
@@ -16,8 +18,8 @@ import { GlobalStore } from '../store/global.store'
  **/
 function ArenaView() {
     const params = useParams()
-    const [searchParams] = useSearchParams()
     const navigate = useNavigate()
+    const { openGameResultModal } = useContext(ModalContext)
     const [auth, _, guestId] = useContext(GlobalStore).auth
     const { success, error } = useContext(MessageContext)
     const [player, setPlayer] = useState({
@@ -286,7 +288,6 @@ function ArenaView() {
 
     // This function is used to handle the event when a player makes a move on the chessboard.
     const onMoveHandler = (move, FEN, pgn) => {
-        console.log(move)
         socket.emit(
             'move',
             JSON.stringify({
@@ -302,29 +303,43 @@ function ArenaView() {
 
     // This function is used to handle the event when a player wins the game by checkmate.
     const onCheckmateHandler = (color) => {
-        success(`${color} wins by checkmate`)
-        //TODO: handle checkmate
+        console.log(color, player.color[0])
+        openGameResultModal(true, {
+            type: color === player.color[0] ? 'loss' : 'win',
+            color: color === 'w' ? 'b' : 'w',
+            playerImageUrl: player.avatar,
+            opponentImageUrl: opponent.avatar,
+        })
     }
 
     // This function is used to handle the event when a player wins the game by stalemate.
     const onStalemateHandler = () => {
-        console.log('Stalemate')
-        success('Stalemate')
-        //TODO: handle stalemate
+        openGameResultModal(true, {
+            type: 'draw',
+            color: null,
+            playerImageUrl: player.avatar,
+            opponentImageUrl: opponent.avatar,
+        })
     }
 
     // This function is used to handle the event when a player wins the game by insufficient material.
     const onInsufficientMaterialHandler = () => {
-        console.log('Insufficient Material')
-        success('Insufficient Material')
-        //TODO: handle insufficient material
+        openGameResultModal(true, {
+            type: 'draw',
+            color: null,
+            playerImageUrl: player.avatar,
+            opponentImageUrl: opponent.avatar,
+        })
     }
 
     // This function is used to handle the event when a player wins the game by threefold repetition.
     const onThreefoldRepetitionHandler = () => {
-        console.log('Threefold Repetition')
-        success('Threefold Repetition')
-        //TODO: handle threefold repetition
+        openGameResultModal(true, {
+            type: 'draw',
+            color: null,
+            playerImageUrl: player.avatar,
+            opponentImageUrl: opponent.avatar,
+        })
     }
 
     return (
@@ -389,19 +404,26 @@ function ArenaView() {
                             ></Player>
                         </Space>
                     </Col>
-                    <Col xs={24} sm={24} md={10} xl={8} xxl={8}>
+                    <Col
+                        style={{
+                            height: '100%',
+                        }}
+                        xs={24}
+                        sm={24}
+                        md={10}
+                        xl={8}
+                        xxl={8}
+                    >
                         <Card
                             style={{
                                 height: '100%',
+                                overflow: 'auto',
                             }}
                         >
-                            <Button
-                                danger
-                                type="primary"
-                                onClick={leaveRoomHandler}
-                            >
-                                Leave Room
-                            </Button>
+                            <ActionsTab
+                                movesList={movesList}
+                                onLeaveRoom={leaveRoomHandler}
+                            ></ActionsTab>
                         </Card>
                     </Col>
                 </Row>

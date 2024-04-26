@@ -483,8 +483,6 @@ const ChessBoard = ({
     const onDrag = useCallback(
         function () {
             const squares = getDroppables()
-            console.log('Drag')
-
             //getting selected piece from global state
             let hit = undefined
             for (const square of squares) {

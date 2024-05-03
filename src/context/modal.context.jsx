@@ -5,6 +5,7 @@ import ChangePassword from '../Components/modals/ChangePassword'
 import CreateGame from '../Components/modals/CreateGame'
 import JoinGame from '../Components/modals/JoinGame'
 import GameResult from '../Components/modals/GameResult'
+import Draw from '../Components/modals/Draw'
 
 // Creating a context object and exporting it
 export const ModalContext = React.createContext({
@@ -15,6 +16,7 @@ export const ModalContext = React.createContext({
     openCreateGame: false,
     openJoinGame: false,
     openGameResult: false,
+    openDraw: false,
     setOpenLogin: () => {},
     setOpenSignup: () => {},
     setOpenChangePassword: () => {},
@@ -22,6 +24,7 @@ export const ModalContext = React.createContext({
     setOpenJoinGame: () => {},
     setOpenGameResult: () => {},
     openGameResultModal: () => {},
+    openDrawModal: () => {},
 })
 
 // Creating a provider for the context object and exporting it
@@ -42,10 +45,15 @@ export default function ModalContextProvider({ children }) {
             imageUrl: null,
         },
     })
+    const [openDraw, setOpenDraw] = useState({
+        open: false,
+        onAccept: () => {},
+        onReject: () => {},
+    })
 
     function openGameResultModal(
         open,
-        { type, color, playerImageUrl, opponentImageUrl }
+        { type, color, playerImageUrl, opponentImageUrl, message }
     ) {
         setOpenGameResult(() => {
             return {
@@ -58,6 +66,17 @@ export default function ModalContextProvider({ children }) {
                 opponent: {
                     imageUrl: opponentImageUrl,
                 },
+                message: message,
+            }
+        })
+    }
+
+    function openDrawModal(open, onAccept, onReject) {
+        setOpenDraw(() => {
+            return {
+                open,
+                onAccept,
+                onReject,
             }
         })
     }
@@ -71,6 +90,7 @@ export default function ModalContextProvider({ children }) {
                 openCreateGame,
                 openJoinGame,
                 openGameResult,
+                openDraw,
                 setOpenLogin,
                 setOpenSignup,
                 setOpenChangePassword,
@@ -78,6 +98,7 @@ export default function ModalContextProvider({ children }) {
                 setOpenJoinGame,
                 setOpenGameResult,
                 openGameResultModal,
+                openDrawModal,
             }}
         >
             {children}
@@ -88,6 +109,7 @@ export default function ModalContextProvider({ children }) {
             <CreateGame></CreateGame>
             <JoinGame></JoinGame>
             <GameResult></GameResult>
+            <Draw></Draw>
         </ModalContext.Provider>
     )
 }

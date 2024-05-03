@@ -1,16 +1,10 @@
 import { useState, useEffect } from 'react'
-import {
-    Flex,
-    Button,
-    Popconfirm,
-    Divider,
-    Typography,
-    Space,
-} from 'antd'
+import { Flex, Button, Popconfirm, Divider, Typography, Space } from 'antd'
 import {
     LogoutOutlined,
     LeftSquareOutlined,
     ArrowDownOutlined,
+    FlagOutlined,
 } from '@ant-design/icons'
 
 const ActionsTab = ({
@@ -23,7 +17,7 @@ const ActionsTab = ({
         <>
             <Flex gap="small" wrap="wrap">
                 <Popconfirm
-                    title="Leave the game"
+                    title="Leave the room"
                     description="Are you sure want to leave this game?"
                     okText="Yes"
                     cancelText="No"
@@ -42,13 +36,13 @@ const ActionsTab = ({
                     <Button icon={<LogoutOutlined />}>Resign</Button>
                 </Popconfirm>
                 <Popconfirm
-                    title="Draw the task"
-                    description="Are you sure want to draw this match?"
+                    title="Offer Draw"
+                    description="Are you sure want to draw this game?"
                     okText="Yes"
                     cancelText="No"
                     onConfirm={onRequestDraw}
                 >
-                    <Button icon={<ArrowDownOutlined />}>Draw</Button>
+                    <Button icon={<FlagOutlined />}>Draw</Button>
                 </Popconfirm>
             </Flex>
             <Divider />

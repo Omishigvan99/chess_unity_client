@@ -39,6 +39,7 @@ function GameResult() {
                     color: null,
                     playerImageUrl: null,
                     opponentImageUrl: null,
+                    message: null,
                 })
             }}
         >
@@ -55,9 +56,15 @@ function GameResult() {
                         ...styles.title,
                     }}
                 >
-                    {openGameResult.type === 'win' ? 'You Won' : null}
-                    {openGameResult.type === 'draw' ? 'Draw' : null}
-                    {openGameResult.type === 'loss' ? 'You Lose' : null}
+                    {openGameResult.type === 'win'
+                        ? openGameResult.message
+                        : null}
+                    {openGameResult.type === 'draw'
+                        ? openGameResult.message
+                        : null}
+                    {openGameResult.type === 'loss'
+                        ? openGameResult.message
+                        : null}
                 </Typography.Title>
                 <Space>
                     {openGameResult.type === 'win' ? (

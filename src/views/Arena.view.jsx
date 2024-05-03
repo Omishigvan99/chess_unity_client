@@ -1,16 +1,16 @@
 import { useNavigate, useParams } from 'react-router'
-import { Row, Col, Card, Space, Button, Divider } from 'antd'
+import { Row, Col, Card, Space } from 'antd'
 import Loading from '../Components/UI/Loading'
 import ChessBoard, { remoteMove } from '../Components/board/ChessBoard'
 import Player from '../Components/UI/Player'
 import { useContext, useEffect, useRef, useState } from 'react'
 import { useSocket } from '../hooks/useSocket'
-import { useSearchParams } from 'react-router-dom'
 import { MessageContext } from '../context/message.context'
 import { getRoomDetails, joinRoom } from '../utils/rooms'
 import { GlobalStore } from '../store/global.store'
 import ActionsTab from '../Components/UI/ActionsTab'
 import { ModalContext } from '../context/modal.context'
+import * as constants from '../constants/chess'
 
 /**
  * ArenaView component is used to display the game arena where players can play chess.
@@ -19,7 +19,7 @@ import { ModalContext } from '../context/modal.context'
 function ArenaView() {
     const params = useParams()
     const navigate = useNavigate()
-    const { openGameResultModal } = useContext(ModalContext)
+    const { openGameResultModal, openDrawModal } = useContext(ModalContext)
     const [auth, _, guestId] = useContext(GlobalStore).auth
     const { success, error } = useContext(MessageContext)
     const [player, setPlayer] = useState({
@@ -97,6 +97,78 @@ function ArenaView() {
             setMovesList((prevState) => [...prevState, move.to])
             // Emit the move to the remote chess event listeners.
             remoteMove.sendMove(params.roomId, move)
+        })
+
+        // listen for 'rematch:request' events from the server.
+        socket.on('rematch:request', (data) => {
+            // TODO: Implement rematch request logic.
+        })
+
+        // listen for 'rematch:accept' events from the server.
+        socket.on('rematch:response', (data) => {
+            //TODO: Implement rematch accept logic.
+        })
+
+        // listen for 'resign' events from the server.
+        socket.on('resignation', (data) => {
+            openGameResultModal(true, {
+                type: 'win',
+                color: player.color[0],
+                playerImageUrl: player.avatar,
+                opponentImageUrl: opponent.avatar,
+                message: constants.WIN_RESIGNATION,
+            })
+        })
+
+        socket.on('draw:request', (data) => {
+            openDrawModal(
+                true,
+                () => {
+                    try {
+                        socket.emit('draw:response', {
+                            roomId: params.roomId,
+                            isGuest: !auth.isAuthenticated,
+                            response: 'accept',
+                        })
+                        openGameResultModal(true, {
+                            type: 'draw',
+                            color: null,
+                            playerImageUrl: player.avatar,
+                            opponentImageUrl: opponent.avatar,
+                            message: constants.DRAW_AGREED,
+                        })
+                    } catch (err) {
+                        error('Failed to accept draw request')
+                    }
+                },
+                () => {
+                    try {
+                        socket.emit('draw:response', {
+                            roomId: params.roomId,
+                            isGuest: !auth.isAuthenticated,
+                            response: 'reject',
+                        })
+                    } catch (err) {
+                        error('Failed to reject draw request')
+                    }
+                }
+            )
+        })
+
+        socket.on('draw:response', (data) => {
+            if (data.response === 'accept') {
+                openGameResultModal(true, {
+                    type: 'draw',
+                    color: null,
+                    playerImageUrl: player.avatar,
+                    opponentImageUrl: opponent.avatar,
+                    message: constants.DRAW_AGREED,
+                })
+            }
+
+            if (data.response === 'reject') {
+                error('Draw request rejected')
+            }
         })
 
         // Return a cleanup function to run when the component unmounts.
@@ -303,12 +375,15 @@ function ArenaView() {
 
     // This function is used to handle the event when a player wins the game by checkmate.
     const onCheckmateHandler = (color) => {
-        console.log(color, player.color[0])
         openGameResultModal(true, {
             type: color === player.color[0] ? 'loss' : 'win',
             color: color === 'w' ? 'b' : 'w',
             playerImageUrl: player.avatar,
             opponentImageUrl: opponent.avatar,
+            message:
+                color === player.color[0]
+                    ? constants.LOSS_CHECKMATE
+                    : constants.WIN,
         })
     }
 
@@ -319,6 +394,7 @@ function ArenaView() {
             color: null,
             playerImageUrl: player.avatar,
             opponentImageUrl: opponent.avatar,
+            message: constants.DRAW_STALEMATE,
         })
     }
 
@@ -329,19 +405,58 @@ function ArenaView() {
             color: null,
             playerImageUrl: player.avatar,
             opponentImageUrl: opponent.avatar,
+            message: constants.DRAW_INSUFFICIENT_MATERIAL,
         })
     }
 
     // This function is used to handle the event when a player wins the game by threefold repetition.
-    const onThreefoldRepetitionHandler = () => {
+    const onThreefoldRepitionHandler = () => {
         openGameResultModal(true, {
             type: 'draw',
             color: null,
             playerImageUrl: player.avatar,
             opponentImageUrl: opponent.avatar,
+            message: constants.DRAW_THREEFOLD_REPETITION,
         })
     }
 
+    // function to resign from the game
+    const resign = () => {
+        try {
+            socket.emit('resign', {
+                roomId: params.roomId,
+                isGuest: !auth.isAuthenticated,
+            })
+            success('Resigned')
+        } catch (err) {
+            error('Failed to resign')
+        }
+    }
+
+    // function to request a draw
+    const requestDraw = () => {
+        try {
+            socket.emit('draw:request', {
+                roomId: params.roomId,
+                isGuest: !auth.isAuthenticated,
+            })
+            success('Draw Requested')
+        } catch (err) {
+            error('Failed to request draw')
+        }
+    }
+
+    const requestRematch = () => {
+        try {
+            socket.emit('rematch:request', {
+                roomId: params.roomId,
+                isGuest: !auth.isAuthenticated,
+            })
+            success('Rematch Requested')
+        } catch (err) {
+            error('Failed to request rematch')
+        }
+    }
     return (
         <>
             <Loading isloading={isLoading}>
@@ -394,7 +509,7 @@ function ArenaView() {
                                 }
                                 onStalemate={onStalemateHandler}
                                 onThreefoldRepetition={
-                                    onThreefoldRepetitionHandler
+                                    onThreefoldRepitionHandler
                                 }
                             ></ChessBoard>
                             <Player
@@ -423,6 +538,8 @@ function ArenaView() {
                             <ActionsTab
                                 movesList={movesList}
                                 onLeaveRoom={leaveRoomHandler}
+                                onRequestDraw={requestDraw}
+                                onResign={resign}
                             ></ActionsTab>
                         </Card>
                     </Col>

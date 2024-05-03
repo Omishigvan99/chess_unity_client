@@ -100,7 +100,12 @@ const ChessBoard = ({
                 chess.move({ ...currentMove })
 
                 if (!isRemoteMove) {
-                    onmove({ ...currentMove }, chess.fen(), chess.pgn())
+                    onmove(
+                        { ...currentMove },
+                        chess.fen(),
+                        chess.pgn(),
+                        chess.history()
+                    )
                 }
 
                 //highlighting move played

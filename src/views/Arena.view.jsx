@@ -91,26 +91,26 @@ function ArenaView() {
         })
 
         // listen for 'move' events from the server.
-        socket.on('remote-move', (move) => {
-            move = JSON.parse(move)
+        socket.on('remote-move', (data) => {
+            const { move, history } = JSON.parse(data)
             // add the move to the moves list.
-            setMovesList((prevState) => [...prevState, move.to])
+            setMovesList(() => history)
             // Emit the move to the remote chess event listeners.
             remoteMove.sendMove(params.roomId, move)
         })
 
         // listen for 'rematch:request' events from the server.
-        socket.on('rematch:request', (data) => {
+        socket.on('rematch:request', () => {
             // TODO: Implement rematch request logic.
         })
 
         // listen for 'rematch:accept' events from the server.
-        socket.on('rematch:response', (data) => {
+        socket.on('rematch:response', () => {
             //TODO: Implement rematch accept logic.
         })
 
         // listen for 'resign' events from the server.
-        socket.on('resignation', (data) => {
+        socket.on('resignation', () => {
             openGameResultModal(true, {
                 type: 'win',
                 color: player.color[0],
@@ -120,7 +120,7 @@ function ArenaView() {
             })
         })
 
-        socket.on('draw:request', (data) => {
+        socket.on('draw:request', () => {
             openDrawModal(
                 true,
                 () => {
@@ -200,6 +200,8 @@ function ArenaView() {
                     setRoomBoardState(response.data.board)
                     // Set the previous move to the current previous move.
                     setPreviousMove(response.data.previousMove)
+                    // Set the moves list to the current moves list.
+                    setMovesList(() => response.data.history)
                 }
 
                 let opponent = null
@@ -359,7 +361,8 @@ function ArenaView() {
     }
 
     // This function is used to handle the event when a player makes a move on the chessboard.
-    const onMoveHandler = (move, FEN, pgn) => {
+    const onMoveHandler = (move, FEN, pgn, history) => {
+        console.log(history)
         socket.emit(
             'move',
             JSON.stringify({
@@ -368,9 +371,10 @@ function ArenaView() {
                 move: move,
                 FEN: FEN,
                 pgn: pgn,
+                history: history,
             })
         )
-        setMovesList((prevState) => [...prevState, move.to])
+        setMovesList(() => history)
     }
 
     // This function is used to handle the event when a player wins the game by checkmate.
@@ -446,17 +450,6 @@ function ArenaView() {
         }
     }
 
-    const requestRematch = () => {
-        try {
-            socket.emit('rematch:request', {
-                roomId: params.roomId,
-                isGuest: !auth.isAuthenticated,
-            })
-            success('Rematch Requested')
-        } catch (err) {
-            error('Failed to request rematch')
-        }
-    }
     return (
         <>
             <Loading isloading={isLoading}>

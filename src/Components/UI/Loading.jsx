@@ -1,9 +1,9 @@
 import { Spin } from 'antd'
 
-function Loading({ style, isloading, children }) {
+function Loading({ style, isLoading, children }) {
     return (
         <>
-            {isloading ? (
+            {isLoading ? (
                 <div
                     style={{
                         height: '100%',

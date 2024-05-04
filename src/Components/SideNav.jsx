@@ -73,7 +73,6 @@ const SideNav = () => {
 
     //menu click handler
     const onMenuClickHandler = (event) => {
-        console.log(event)
         switch (event.key) {
             case 'dark-mode-on':
                 setColorStyle('dark')

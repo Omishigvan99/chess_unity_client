@@ -39,7 +39,7 @@ const ChessBoard = ({
         guideBackgroundColor: '#3E291B',
         guideForegroundColor: '#F0D9B5',
     },
-    onmove = () => {},
+    onMove = () => {},
     onCheckmate = () => {},
     onStalemate = () => {},
     onInsufficientMaterial = () => {},
@@ -101,7 +101,7 @@ const ChessBoard = ({
                 chess.move({ ...currentMove })
 
                 if (!isRemoteMove) {
-                    onmove({ ...currentMove }, chess.fen(), chess.history())
+                    onMove({ ...currentMove }, chess.fen(), chess.history())
                 }
 
                 //highlighting move played

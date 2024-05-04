@@ -5,6 +5,7 @@ import Loading from '../UI/Loading'
 import CreateGameForm from '../forms/CreateGame.form'
 import { createRoom, deleteRoom } from '../../utils/rooms'
 import { GlobalStore } from '../../store/global.store'
+import { P2P_URL } from '../../constants/URL'
 
 function CreateGame() {
     const { openCreateGame, setOpenCreateGame } = useContext(ModalContext)
@@ -12,7 +13,6 @@ function CreateGame() {
     const [roomId, setRoomId] = useState(null)
     const [isLoading, setIsLoading] = useState(true)
     const [auth, _, guestId] = useContext(GlobalStore).auth
-    const [hostId, setHostId] = useState(null)
     const [error, setError] = useState({
         isError: false,
         message: '',
@@ -20,20 +20,21 @@ function CreateGame() {
     })
 
     //function to initialize the room
-    const initiatRoom = useCallback(async () => {
+    const initiateRoom = useCallback(async () => {
         try {
             const roomData = await createRoom(
                 auth.isAuthenticated,
                 auth.isAuthenticated ? auth.id : guestId
             )
-            setLink(`http://localhost:8000/arena/${roomData.roomId}`)
+            setLink(
+                `${import.meta.env.VITE_APP_URL}${P2P_URL}/${roomData.roomId}`
+            )
             setRoomId(roomData.roomId)
-            setHostId(roomData.hostId)
         } catch (error) {
             setIsLoading(false)
             setError({
                 isError: true,
-                message: error?.message || 'Unknow Error',
+                message: error?.message || 'Unknown Error',
                 description:
                     error?.description ||
                     'Something went wrong while creating game',
@@ -45,16 +46,15 @@ function CreateGame() {
     useEffect(() => {
         if (!openCreateGame) return
         // call the function to create room
-        initiatRoom()
+        initiateRoom()
         setIsLoading(false)
-    }, [openCreateGame, initiatRoom])
+    }, [openCreateGame, initiateRoom])
 
     // handler to cancel the game creation
     function onCancelHandler() {
         deleteRoom(roomId, auth.isAuthenticated)
         setLink(null)
         setRoomId(null)
-        setHostId(null)
         setOpenCreateGame(false)
     }
 
@@ -71,7 +71,7 @@ function CreateGame() {
                 </>
             ) : (
                 <>
-                    <Loading isloading={isLoading}>
+                    <Loading isLoading={isLoading}>
                         <CreateGameForm
                             link={link}
                             roomId={roomId}

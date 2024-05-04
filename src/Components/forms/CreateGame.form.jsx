@@ -3,6 +3,7 @@ import { CopyOutlined } from '@ant-design/icons'
 import { useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { ModalContext } from '../../context/modal.context'
+import { P2P_URL } from '../../constants/URL'
 
 function CreateGameForm({ link, roomId }) {
     const [form] = Form.useForm()
@@ -31,7 +32,19 @@ function CreateGameForm({ link, roomId }) {
     // form submit handler
     const onStartGameHandler = () => {
         if (!roomId) return
-        navigate(`/arena/${roomId}`)
+        const color = (() => {
+            switch (selectedPiece) {
+                case 1:
+                    return 'black'
+                case 2:
+                    return 'white'
+                case 3:
+                    return Math.random() > 0.5 ? 'black' : 'white'
+                default:
+                    return Math.random() > 0.5 ? 'black' : 'white'
+            }
+        })()
+        navigate(`${P2P_URL}/${roomId}?color=${color}`)
         form.resetFields()
         setIsCopied(false)
         setOpenCreateGame(false)

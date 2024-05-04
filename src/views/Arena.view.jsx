@@ -1,4 +1,5 @@
-import { useNavigate, useParams } from 'react-router'
+import { useNavigate, useParams, useLocation } from 'react-router'
+import { useSearchParams } from 'react-router-dom'
 import { Row, Col, Card, Space } from 'antd'
 import Loading from '../Components/UI/Loading'
 import ChessBoard, { remoteMove } from '../Components/board/ChessBoard'
@@ -20,6 +21,8 @@ import { movesToPgn } from '../utils/chess'
 function ArenaView() {
     const params = useParams()
     const navigate = useNavigate()
+    const location = useLocation()
+    const [URLSearchParams] = useSearchParams()
     const { openGameResultModal, openDrawModal } = useContext(ModalContext)
     const [auth, _, guestId] = useContext(GlobalStore).auth
     const { success, error } = useContext(MessageContext)
@@ -45,6 +48,9 @@ function ArenaView() {
     const [roomBoardPgn, setRoomBoardPgn] = useState(null)
     const [previousMove, setPreviousMove] = useState(null)
     const [movesList, setMovesList] = useState([])
+
+    //getting color from URLSearchParams
+    const color = URLSearchParams.get('color')
 
     // This useEffect hook is to set current player
     useEffect(() => {
@@ -87,7 +93,6 @@ function ArenaView() {
                         isConnected: false,
                     }
                 })
-                console.log(data)
                 error(`${data.name} disconnected`)
             }
         })
@@ -274,9 +279,12 @@ function ArenaView() {
                 }
 
                 // Determine player's color based on current room state.
-                const playerColor = response.data.players.white
-                    ? 'black'
-                    : 'white'
+                const playerColor = color ? color : 'white'
+
+                //pushing url trimmed of color query to history
+                navigate(location.pathname, {
+                    replace: true,
+                })
 
                 // Join the room with player details.
                 await joinRoom(socket, {
@@ -301,7 +309,6 @@ function ArenaView() {
                 success('Joined Room Successfully')
             } catch (err) {
                 // Log error and update loading state to indicate failure.
-                console.log(err)
                 setIsLoading(false)
                 error('Failed to join Room')
             }
@@ -349,8 +356,6 @@ function ArenaView() {
             }),
             // Callback function to handle the server response.
             (response) => {
-                // Log the response to the console.
-                console.log(response)
                 // Show a notification that the room was left successfully.
                 if (response.success) {
                     success('Left Room Successfully')
@@ -366,7 +371,6 @@ function ArenaView() {
 
     // This function is used to handle the event when a player makes a move on the chessboard.
     const onMoveHandler = (move, FEN, history) => {
-        console.log(history)
         socket.emit(
             'move',
             JSON.stringify({
@@ -417,7 +421,7 @@ function ArenaView() {
     }
 
     // This function is used to handle the event when a player wins the game by threefold repetition.
-    const onThreefoldRepitionHandler = () => {
+    const onThreefoldRepetitionHandler = () => {
         openGameResultModal(true, {
             type: 'draw',
             color: null,
@@ -455,7 +459,7 @@ function ArenaView() {
 
     return (
         <>
-            <Loading isloading={isLoading}>
+            <Loading isLoading={isLoading}>
                 <Row
                     ref={rowContainer}
                     gutter={[12, 12]}
@@ -499,14 +503,14 @@ function ArenaView() {
                                         player.color === 'black' ? 'b' : 'w',
                                     enableGuide: true,
                                 }}
-                                onmove={onMoveHandler}
+                                onMove={onMoveHandler}
                                 onCheckmate={onCheckmateHandler}
                                 onInsufficientMaterial={
                                     onInsufficientMaterialHandler
                                 }
                                 onStalemate={onStalemateHandler}
                                 onThreefoldRepetition={
-                                    onThreefoldRepitionHandler
+                                    onThreefoldRepetitionHandler
                                 }
                             ></ChessBoard>
                             <Player

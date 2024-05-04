@@ -25,6 +25,7 @@ export let remoteMove = new RemoteChessEvent()
 const ChessBoard = ({
     id,
     FEN,
+    pgn,
     size,
     previousPlayedMove,
     options = {
@@ -100,12 +101,7 @@ const ChessBoard = ({
                 chess.move({ ...currentMove })
 
                 if (!isRemoteMove) {
-                    onmove(
-                        { ...currentMove },
-                        chess.fen(),
-                        chess.pgn(),
-                        chess.history()
-                    )
+                    onmove({ ...currentMove }, chess.fen(), chess.history())
                 }
 
                 //highlighting move played
@@ -176,6 +172,14 @@ const ChessBoard = ({
             setBoard(chess.board())
         }
     }, [FEN, options.flip, options.activeColor, options.enableGuide])
+
+    // load png
+    useEffect(() => {
+        if (pgn) {
+            chess.loadPgn(pgn)
+            setBoard(chess.board())
+        }
+    }, [pgn, options.flip, options.activeColor, options.enableGuide])
 
     // load current move
     useEffect(() => {

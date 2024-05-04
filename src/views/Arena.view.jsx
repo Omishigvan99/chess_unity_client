@@ -11,6 +11,7 @@ import { GlobalStore } from '../store/global.store'
 import ActionsTab from '../Components/UI/ActionsTab'
 import { ModalContext } from '../context/modal.context'
 import * as constants from '../constants/chess'
+import { movesToPgn } from '../utils/chess'
 
 /**
  * ArenaView component is used to display the game arena where players can play chess.
@@ -41,6 +42,7 @@ function ArenaView() {
     const colContainer = useRef(null)
     const socket = useSocket('/p2p')
     const [roomBoardState, setRoomBoardState] = useState(null)
+    const [roomBoardPgn, setRoomBoardPgn] = useState(null)
     const [previousMove, setPreviousMove] = useState(null)
     const [movesList, setMovesList] = useState([])
 
@@ -202,6 +204,8 @@ function ArenaView() {
                     setPreviousMove(response.data.previousMove)
                     // Set the moves list to the current moves list.
                     setMovesList(() => response.data.history)
+                    // Set the board state to the PGN format of the moves list.
+                    setRoomBoardPgn(movesToPgn(response.data.history))
                 }
 
                 let opponent = null
@@ -361,7 +365,7 @@ function ArenaView() {
     }
 
     // This function is used to handle the event when a player makes a move on the chessboard.
-    const onMoveHandler = (move, FEN, pgn, history) => {
+    const onMoveHandler = (move, FEN, history) => {
         console.log(history)
         socket.emit(
             'move',
@@ -370,7 +374,6 @@ function ArenaView() {
                 isGuest: !auth.isAuthenticated,
                 move: move,
                 FEN: FEN,
-                pgn: pgn,
                 history: history,
             })
         )
@@ -485,6 +488,7 @@ function ArenaView() {
                                 id={params.roomId}
                                 size={size}
                                 FEN={roomBoardState}
+                                pgn={roomBoardPgn}
                                 previousPlayedMove={previousMove}
                                 options={{
                                     flip:

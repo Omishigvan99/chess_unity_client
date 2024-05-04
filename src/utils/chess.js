@@ -169,3 +169,17 @@ export const showPromotionModal = (
 
     promotionModal.hidden = false
 }
+
+//fucntion to convert list of moves into pgn string
+export function movesToPgn(moves) {
+    var pgn = ''
+    var moveNum = 1
+    for (var i = 0; i < moves.length; i++) {
+        if (i % 2 == 0) {
+            pgn += moveNum + '. '
+            moveNum++
+        }
+        pgn += moves[i] + ' '
+    }
+    return pgn
+}

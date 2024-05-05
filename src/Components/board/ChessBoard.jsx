@@ -20,7 +20,7 @@ gsap.registerPlugin(Draggable)
 const initialState = new Chess().board()
 
 // creating remote move event
-export let remoteMove = new RemoteChessEvent()
+export let remoteChessEvent = new RemoteChessEvent()
 
 const ChessBoard = ({
     id,
@@ -46,7 +46,7 @@ const ChessBoard = ({
     onThreefoldRepetition = () => {},
 }) => {
     const [board, setBoard] = useState(initialState)
-    const [getDroppables, addDroppable] = useMultiRef()
+    const [getDroppable, addDroppable] = useMultiRef()
     const { contextSafe } = useGSAP()
     const chessboard = useRef(null)
     const promotionModalRef = useRef(null)
@@ -66,7 +66,7 @@ const ChessBoard = ({
             callback = () => {},
             zIndexReset = () => {}
         ) => {
-            const squares = getDroppables()
+            const squares = getDroppable()
             const pieces = squares
                 .filter((square) => square.children[1])
                 .map((square) => square.children[1])
@@ -184,7 +184,7 @@ const ChessBoard = ({
     // load current move
     useEffect(() => {
         if (!previousPlayedMove) return
-        const squares = getDroppables()
+        const squares = getDroppable()
         chessUtils.highlightMovePlayed(
             [previousPlayedMove.from, previousPlayedMove.to],
             squares,
@@ -201,7 +201,7 @@ const ChessBoard = ({
 
     // registering remote move event
     useEffect(() => {
-        remoteMove.on('move', (chessboardId, move) => {
+        remoteChessEvent.on('move', (chessboardId, move) => {
             if (chessboardId === id) {
                 performMove(move, true)
             }
@@ -209,7 +209,7 @@ const ChessBoard = ({
 
         //removing remote move event
         return () => {
-            remoteMove.off()
+            remoteChessEvent.off()
         }
     }, [
         options.flip,
@@ -217,6 +217,35 @@ const ChessBoard = ({
         options.enableGuide,
         options.draggable,
         options.clickable,
+        id,
+    ])
+
+    // registering remote reset event
+    useEffect(() => {
+        remoteChessEvent.on('reset', (chessboardId) => {
+            if (chessboardId === id) {
+                chess.reset()
+                //clearing previous highlights
+                let squares = getDroppable()
+                previousMove = []
+                checkSquare = null
+                previousLegalMoves = []
+                chessUtils.removeHighlights(squares, previousMove, checkSquare)
+                setBoard(chess.board())
+            }
+        })
+
+        //removing remote reset event
+        return () => {
+            remoteChessEvent.off()
+        }
+    }, [
+        options.flip,
+        options.activeColor,
+        options.enableGuide,
+        options.draggable,
+        options.clickable,
+        previousMove,
         id,
     ])
 
@@ -239,7 +268,7 @@ const ChessBoard = ({
     // on square click event handler
     const onSquareClick = useCallback(
         function (event) {
-            const squares = getDroppables()
+            const squares = getDroppable()
             const pieces = squares
                 .filter((square) => square.children[1])
                 .map((square) => square.children[1])
@@ -280,7 +309,7 @@ const ChessBoard = ({
 
     // effect for handling click events
     useEffect(() => {
-        let squares = getDroppables()
+        let squares = getDroppable()
 
         // if clickable is false don't add events
         if (!options.clickable) {
@@ -303,7 +332,7 @@ const ChessBoard = ({
     // on piece click event handler
     const onPieceClick = useCallback(
         function onPieceClick(event) {
-            const squares = getDroppables()
+            const squares = getDroppable()
             event.stopPropagation()
             //removing previous highlights if any
             chessUtils.removeHighlights(squares, previousMove, checkSquare)
@@ -358,7 +387,7 @@ const ChessBoard = ({
 
     // function to highlight selected piece
     function highlightSelectedPiece(event) {
-        const squares = getDroppables()
+        const squares = getDroppable()
         //setting selected piece to global state
         selectedPiece = {
             square: event.target.dataset.square,
@@ -392,7 +421,7 @@ const ChessBoard = ({
     // on drag start event handler
     const onDragStart = useCallback(
         function (event) {
-            const squares = getDroppables()
+            const squares = getDroppable()
 
             //removing previous highlights if any
             chessUtils.removeHighlights(squares, previousMove, checkSquare)
@@ -438,7 +467,7 @@ const ChessBoard = ({
     // on drag end event handler
     const onDragEnd = useCallback(
         function (event) {
-            const squares = getDroppables()
+            const squares = getDroppable()
             chessUtils.removeHighlights(squares, previousMove, checkSquare)
             let callback = () => {
                 gsap.to(this.target, {
@@ -491,7 +520,7 @@ const ChessBoard = ({
     // on drag event handler
     const onDrag = useCallback(
         function () {
-            const squares = getDroppables()
+            const squares = getDroppable()
             //getting selected piece from global state
             let hit = undefined
             for (const square of squares) {

@@ -11,12 +11,21 @@ export class RemoteChessEvent {
         })
     }
 
+    //reset board for all listeners
+    resetBoard(chessboardId) {
+        this.#listenersList.forEach((item) => {
+            if (item.event === 'reset') {
+                item.callback(chessboardId)
+            }
+        })
+    }
+
     // registering listeners for events
     on(event, callback) {
         this.#listenersList.push({ event, callback })
     }
 
-    // unregistering all listeners for events
+    // unregistered all listeners for events
     off() {
         this.#listenersList = []
     }

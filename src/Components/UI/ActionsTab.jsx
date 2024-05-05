@@ -74,7 +74,7 @@ export const Moves = ({ movesList }) => {
         >
             <Space direction="vertical">
                 {pairs.map((ply, index) => (
-                    <div>
+                    <div key={ply + index}>
                         <Space>
                             <Typography.Text
                                 style={{

@@ -2,7 +2,7 @@ import { useNavigate, useParams, useLocation } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
 import { Row, Col, Card, Space } from 'antd'
 import Loading from '../Components/UI/Loading'
-import ChessBoard, { remoteMove } from '../Components/board/ChessBoard'
+import ChessBoard, { remoteChessEvent } from '../Components/board/ChessBoard'
 import Player from '../Components/UI/Player'
 import { useContext, useEffect, useRef, useState } from 'react'
 import { useSocket } from '../hooks/useSocket'
@@ -23,7 +23,7 @@ function ArenaView() {
     const navigate = useNavigate()
     const location = useLocation()
     const [URLSearchParams] = useSearchParams()
-    const { openGameResultModal, openDrawModal } = useContext(ModalContext)
+    const { openGameResultModal, openRequestModal } = useContext(ModalContext)
     const [auth, _, guestId] = useContext(GlobalStore).auth
     const { success, error } = useContext(MessageContext)
     const [player, setPlayer] = useState({
@@ -64,11 +64,10 @@ function ArenaView() {
         })
     }, [auth.isAuthenticated, guestId])
 
-    // This useEffect hook is used to handle the socket events for user connection and disconnection.
+    // This useEffect hook is used to handle the socket events
     useEffect(() => {
         // Listen for 'user-connected' events from the server.
         socket.on('user-connected', (data) => {
-            data = JSON.parse(data)
             //set the opponent state with the opponent data from the server response.
             if (data.id !== player.id) {
                 setOpponent({
@@ -84,7 +83,6 @@ function ArenaView() {
 
         // Listen for 'user-disconnected' events from the server.
         socket.on('user-disconnected', (data) => {
-            data = JSON.parse(data)
             //set the opponent state with the opponent data from the server response.
             if (data.id === opponent.id) {
                 setOpponent((prevState) => {
@@ -99,21 +97,70 @@ function ArenaView() {
 
         // listen for 'move' events from the server.
         socket.on('remote-move', (data) => {
-            const { move, history } = JSON.parse(data)
+            const { move, history } = data
             // add the move to the moves list.
             setMovesList(() => history)
             // Emit the move to the remote chess event listeners.
-            remoteMove.sendMove(params.roomId, move)
+            remoteChessEvent.sendMove(params.roomId, move)
         })
 
         // listen for 'rematch:request' events from the server.
         socket.on('rematch:request', () => {
-            // TODO: Implement rematch request logic.
+            openRequestModal(
+                true,
+                'Rematch Request',
+                'Your opponent has requested a rematch. Do you accept?',
+                () => {
+                    try {
+                        // Emit a 'rematch:response' event to the opponent with the response as 'accept'.
+                        socket.emit('rematch:response', {
+                            roomId: params.roomId,
+                            isGuest: !auth.isAuthenticated,
+                            response: 'accept',
+                        })
+                    } catch (err) {
+                        error('Failed to accept rematch request')
+                    }
+                },
+                () => {
+                    try {
+                        // Emit a 'rematch:response' event to the opponent with the response as 'reject'.
+                        socket.emit('rematch:response', {
+                            roomId: params.roomId,
+                            isGuest: !auth.isAuthenticated,
+                            response: 'reject',
+                        })
+
+                        //navigate to home page
+                        navigate('/')
+                    } catch (err) {
+                        error('Failed to reject rematch request')
+                    }
+                }
+            )
         })
 
         // listen for 'rematch:accept' events from the server.
-        socket.on('rematch:response', () => {
-            //TODO: Implement rematch accept logic.
+        socket.on('rematch:response', (data) => {
+            if (data.response === 'accept') {
+                // close the game result modal and reset the board.
+                openGameResultModal(false, {
+                    type: 'rematch',
+                    color: null,
+                    playerImageUrl: player.avatar,
+                    opponentImageUrl: opponent.avatar,
+                    message: constants.REMATCH_AGREED,
+                    requestRematch: () => {},
+                    quit: () => {},
+                })
+
+                socket.emit('reset', {
+                    roomId: params.roomId,
+                    isGuest: !auth.isAuthenticated,
+                })
+            } else if (data.response === 'reject') {
+                error('Rematch request rejected')
+            }
         })
 
         // listen for 'resign' events from the server.
@@ -124,12 +171,17 @@ function ArenaView() {
                 playerImageUrl: player.avatar,
                 opponentImageUrl: opponent.avatar,
                 message: constants.WIN_RESIGNATION,
+                requestRematch: requestRematch,
+                quit: quitGame,
             })
         })
 
+        // listen for 'draw:request' events from the server.
         socket.on('draw:request', () => {
-            openDrawModal(
+            openRequestModal(
                 true,
+                'Draw Request',
+                'Your opponent has requested a draw. Do you accept?',
                 () => {
                     try {
                         socket.emit('draw:response', {
@@ -143,6 +195,8 @@ function ArenaView() {
                             playerImageUrl: player.avatar,
                             opponentImageUrl: opponent.avatar,
                             message: constants.DRAW_AGREED,
+                            requestRematch: requestRematch,
+                            quit: quitGame,
                         })
                     } catch (err) {
                         error('Failed to accept draw request')
@@ -162,6 +216,7 @@ function ArenaView() {
             )
         })
 
+        // listen for 'draw:response' events from the server.
         socket.on('draw:response', (data) => {
             if (data.response === 'accept') {
                 openGameResultModal(true, {
@@ -170,6 +225,8 @@ function ArenaView() {
                     playerImageUrl: player.avatar,
                     opponentImageUrl: opponent.avatar,
                     message: constants.DRAW_AGREED,
+                    requestRematch: requestRematch,
+                    quit: quitGame,
                 })
             }
 
@@ -178,12 +235,22 @@ function ArenaView() {
             }
         })
 
+        // listen for 'reset' events from the server.
+        socket.on('game:reset', () => {
+            console.log('Game Reset')
+            remoteChessEvent.resetBoard(params.roomId)
+            setPreviousMove(null)
+            setMovesList([])
+            setRoomBoardPgn(movesToPgn([]))
+            success('New Game Started')
+        })
+
         // Return a cleanup function to run when the component unmounts.
         return () => {
             // Remove all listeners from the socket to prevent memory leaks.
             socket.removeAllListeners()
         }
-    }, [player, opponent])
+    }, [player, opponent, params.roomId])
 
     // This useEffect hook is used to handle room joining when the component mounts.
     useEffect(() => {
@@ -214,6 +281,7 @@ function ArenaView() {
                 }
 
                 let opponent = null
+                let opponentColor = null
 
                 // check if opponent exists in the room and is of color other than the player.
                 if (
@@ -221,6 +289,7 @@ function ArenaView() {
                     response.data.players.white?.id !== player.id
                 ) {
                     opponent = response.data.players.white
+                    opponentColor = 'white'
                 }
 
                 if (
@@ -228,6 +297,7 @@ function ArenaView() {
                     response.data.players.black?.id !== player.id
                 ) {
                     opponent = response.data.players.black
+                    opponentColor = 'black'
                 }
 
                 // If opponent exists, set opponent state.
@@ -278,8 +348,12 @@ function ArenaView() {
                     return
                 }
 
-                // Determine player's color based on current room state.
-                const playerColor = color ? color : 'white'
+                let playerColor = color
+
+                // If no color and there is opponent then set player color opposite to opponent
+                if (!playerColor && opponent) {
+                    playerColor = opponentColor === 'white' ? 'black' : 'white'
+                }
 
                 //pushing url trimmed of color query to history
                 navigate(location.pathname, {
@@ -347,13 +421,13 @@ function ArenaView() {
         // Emit a 'leave-room' event to the server with the room and player details.
         socket.emit(
             'leave-room',
-            JSON.stringify({
+            {
                 roomId: params.roomId,
                 playerId: player.id,
                 name: player.name,
                 rating: player.rating,
                 isGuest: !auth.isAuthenticated,
-            }),
+            },
             // Callback function to handle the server response.
             (response) => {
                 // Show a notification that the room was left successfully.
@@ -371,16 +445,13 @@ function ArenaView() {
 
     // This function is used to handle the event when a player makes a move on the chessboard.
     const onMoveHandler = (move, FEN, history) => {
-        socket.emit(
-            'move',
-            JSON.stringify({
-                roomId: params.roomId,
-                isGuest: !auth.isAuthenticated,
-                move: move,
-                FEN: FEN,
-                history: history,
-            })
-        )
+        socket.emit('move', {
+            roomId: params.roomId,
+            isGuest: !auth.isAuthenticated,
+            move: move,
+            FEN: FEN,
+            history: history,
+        })
         setMovesList(() => history)
     }
 
@@ -395,6 +466,8 @@ function ArenaView() {
                 color === player.color[0]
                     ? constants.LOSS_CHECKMATE
                     : constants.WIN,
+            requestRematch: requestRematch,
+            quit: quitGame,
         })
     }
 
@@ -406,6 +479,8 @@ function ArenaView() {
             playerImageUrl: player.avatar,
             opponentImageUrl: opponent.avatar,
             message: constants.DRAW_STALEMATE,
+            requestRematch: requestRematch,
+            quit: quitGame,
         })
     }
 
@@ -417,6 +492,8 @@ function ArenaView() {
             playerImageUrl: player.avatar,
             opponentImageUrl: opponent.avatar,
             message: constants.DRAW_INSUFFICIENT_MATERIAL,
+            requestRematch: requestRematch,
+            quit: quitGame,
         })
     }
 
@@ -428,6 +505,8 @@ function ArenaView() {
             playerImageUrl: player.avatar,
             opponentImageUrl: opponent.avatar,
             message: constants.DRAW_THREEFOLD_REPETITION,
+            requestRematch: requestRematch,
+            quit: quitGame,
         })
     }
 
@@ -455,6 +534,25 @@ function ArenaView() {
         } catch (err) {
             error('Failed to request draw')
         }
+    }
+
+    //function to request a rematch
+    const requestRematch = () => {
+        try {
+            socket.emit('rematch:request', {
+                roomId: params.roomId,
+                isGuest: !auth.isAuthenticated,
+            })
+            success('Rematch Requested')
+        } catch (err) {
+            error('Failed to request rematch')
+        }
+    }
+
+    //function to quit the game
+    const quitGame = () => {
+        leaveRoomHandler()
+        navigate('/')
     }
 
     return (

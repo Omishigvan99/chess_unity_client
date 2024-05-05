@@ -40,6 +40,8 @@ function GameResult() {
                     playerImageUrl: null,
                     opponentImageUrl: null,
                     message: null,
+                    requestRematch: () => {},
+                    quit: () => {},
                 })
             }}
         >
@@ -105,8 +107,40 @@ function GameResult() {
                     }}
                     split
                 >
-                    <Button type="primary">Rematch</Button>
-                    <Button danger>Quit</Button>
+                    <Button
+                        type="primary"
+                        onClick={() => {
+                            openGameResult.requestRematch()
+                            openGameResultModal(false, {
+                                type: null,
+                                color: null,
+                                playerImageUrl: null,
+                                opponentImageUrl: null,
+                                message: null,
+                                requestRematch: () => {},
+                                quit: () => {},
+                            })
+                        }}
+                    >
+                        Rematch
+                    </Button>
+                    <Button
+                        danger
+                        onClick={() => {
+                            openGameResult.quit()
+                            openGameResultModal(false, {
+                                type: null,
+                                color: null,
+                                playerImageUrl: null,
+                                opponentImageUrl: null,
+                                message: null,
+                                requestRematch: () => {},
+                                quit: () => {},
+                            })
+                        }}
+                    >
+                        Quit
+                    </Button>
                 </Space>
             </Space>
         </Modal>

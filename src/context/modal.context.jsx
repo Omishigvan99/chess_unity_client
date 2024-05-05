@@ -5,7 +5,7 @@ import ChangePassword from '../Components/modals/ChangePassword'
 import CreateGame from '../Components/modals/CreateGame'
 import JoinGame from '../Components/modals/JoinGame'
 import GameResult from '../Components/modals/GameResult'
-import Draw from '../Components/modals/Draw'
+import Draw from '../Components/modals/Request'
 
 // Creating a context object and exporting it
 export const ModalContext = React.createContext({
@@ -16,7 +16,7 @@ export const ModalContext = React.createContext({
     openCreateGame: false,
     openJoinGame: false,
     openGameResult: false,
-    openDraw: false,
+    openRequest: false,
     setOpenLogin: () => {},
     setOpenSignup: () => {},
     setOpenChangePassword: () => {},
@@ -24,10 +24,17 @@ export const ModalContext = React.createContext({
     setOpenJoinGame: () => {},
     setOpenGameResult: () => {},
     openGameResultModal: () => {},
-    openDrawModal: () => {},
+    openRequestModal: () => {},
 })
 
-// Creating a provider for the context object and exporting it
+/**
+ * Provides the modal context to its children components.
+ *
+ * @component
+ * @param {Object} props - The component props.
+ * @param {ReactNode} props.children - The child components.
+ * @returns {ReactNode} The rendered component.
+ */
 export default function ModalContextProvider({ children }) {
     const [openLogin, setOpenLogin] = useState(false)
     const [openSignup, setOpenSignup] = useState(false)
@@ -45,15 +52,35 @@ export default function ModalContextProvider({ children }) {
             imageUrl: null,
         },
     })
-    const [openDraw, setOpenDraw] = useState({
+    const [openRequest, setOpenRequest] = useState({
         open: false,
         onAccept: () => {},
         onReject: () => {},
     })
 
+    /**
+     * Opens the game result modal.
+     *
+     * @param {boolean} open - Whether the modal should be open or not.
+     * @param {object} options - The options for the modal.
+     * @param {string} options.type - The type of the game result.
+     * @param {string} options.color - The color of the player.
+     * @param {string} options.playerImageUrl - The URL of the player's image.
+     * @param {string} options.opponentImageUrl - The URL of the opponent's image.
+     * @param {string} options.message - The message to be displayed in the modal.
+     * @param {function} options.requestRematch - The function to be called when requesting a rematch.
+     */
     function openGameResultModal(
         open,
-        { type, color, playerImageUrl, opponentImageUrl, message }
+        {
+            type,
+            color,
+            playerImageUrl,
+            opponentImageUrl,
+            message,
+            requestRematch = () => {},
+            quit = () => {},
+        }
     ) {
         setOpenGameResult(() => {
             return {
@@ -67,14 +94,33 @@ export default function ModalContextProvider({ children }) {
                     imageUrl: opponentImageUrl,
                 },
                 message: message,
+                requestRematch: requestRematch,
+                quit: quit,
             }
         })
     }
 
-    function openDrawModal(open, onAccept, onReject) {
-        setOpenDraw(() => {
+    /**
+     * Opens the request modal with the specified parameters.
+     *
+     * @param {boolean} open - Determines whether the modal should be open or closed.
+     * @param {string} title - The title of the modal.
+     * @param {string} description - The description of the modal.
+     * @param {Function} onAccept - The function to be called when the accept button is clicked.
+     * @param {Function} onReject - The function to be called when the reject button is clicked.
+     */
+    function openRequestModal(
+        open,
+        title,
+        description,
+        onAccept = () => {},
+        onReject = () => {}
+    ) {
+        setOpenRequest(() => {
             return {
                 open,
+                title,
+                description,
                 onAccept,
                 onReject,
             }
@@ -90,7 +136,7 @@ export default function ModalContextProvider({ children }) {
                 openCreateGame,
                 openJoinGame,
                 openGameResult,
-                openDraw,
+                openRequest,
                 setOpenLogin,
                 setOpenSignup,
                 setOpenChangePassword,
@@ -98,7 +144,7 @@ export default function ModalContextProvider({ children }) {
                 setOpenJoinGame,
                 setOpenGameResult,
                 openGameResultModal,
-                openDrawModal,
+                openRequestModal,
             }}
         >
             {children}

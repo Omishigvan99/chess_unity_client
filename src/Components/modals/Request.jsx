@@ -2,37 +2,38 @@ import { Modal, Typography } from 'antd'
 import React, { useContext } from 'react'
 import { ModalContext } from '../../context/modal.context'
 
-function Draw() {
-    const { openDraw, openDrawModal } = useContext(ModalContext)
+function Request() {
+    const { openRequest, openRequestModal } = useContext(ModalContext)
     return (
         <Modal
-            open={openDraw.open}
+            open={openRequest.open}
             cancelText="Reject"
             okText="Accept"
-            title="Draw Request"
+            title={openRequest.title}
             onOk={() => {
-                openDraw.onAccept()
-                openDrawModal(
+                openRequest.onAccept()
+                openRequestModal(
                     false,
+                    null,
+                    null,
                     () => {},
                     () => {}
                 )
             }}
             onCancel={() => {
-                openDraw.onReject()
-                openDrawModal(
+                openRequest.onReject()
+                openRequestModal(
                     false,
+                    null,
+                    null,
                     () => {},
                     () => {}
                 )
             }}
         >
-            <p>
-                Opponent has offered a{' '}
-                <Typography.Text strong>DRAW</Typography.Text>
-            </p>
+            <p>{openRequest.description}</p>
         </Modal>
     )
 }
 
-export default Draw
+export default Request

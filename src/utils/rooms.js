@@ -63,7 +63,7 @@ export async function joinRoom(socket, data) {
     return new Promise((resolve, reject) => {
         try {
             // Emitting the 'join-room' event to the server
-            socket.emit('join-room', JSON.stringify(data), (res) => {
+            socket.emit('join-room', data, (res) => {
                 // Resolving the promise with the value of the joined room
                 if (res.success) {
                     resolve(res)
@@ -90,7 +90,7 @@ export async function getRoomDetails(socket, data) {
     return new Promise((resolve, reject) => {
         try {
             // Emitting the 'get-room-details' event to the server
-            socket.emit('get-room', JSON.stringify(data), (res) => {
+            socket.emit('get-room', data, (res) => {
                 // Resolving the promise with the value of the room details
                 if (res.success) {
                     resolve(res)

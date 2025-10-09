@@ -109,7 +109,7 @@ function UpdateForm() {
                                 })
                                 dispatch(
                                     setUser({
-                                        avatar: responseData.data.avatar,
+                                        avatar: responseData.data.avatar.url,
                                     })
                                 )
                                 onSuccess(responseData, file)

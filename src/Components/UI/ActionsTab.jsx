@@ -1,17 +1,28 @@
 import { useState, useEffect } from 'react'
-import { Flex, Button, Popconfirm, Divider, Typography, Space } from 'antd'
+import {
+    Flex,
+    Button,
+    Popconfirm,
+    Divider,
+    Typography,
+    Space,
+    Slider,
+} from 'antd'
 import {
     LogoutOutlined,
     LeftSquareOutlined,
-    ArrowDownOutlined,
     FlagOutlined,
 } from '@ant-design/icons'
 
 const ActionsTab = ({
+    mode,
     movesList,
     onLeaveRoom = () => {},
     onResign = () => {},
     onRequestDraw = () => {},
+    onReset = () => {},
+    onDepthChange = () => {},
+    stockfishLevel,
 }) => {
     return (
         <>
@@ -26,26 +37,59 @@ const ActionsTab = ({
                     <Button icon={<LeftSquareOutlined />}>Leave</Button>
                 </Popconfirm>
 
+                {mode === 'p2p' && (
+                    <Popconfirm
+                        title="Resign the Game"
+                        description="Are you sure want to resign from this game?"
+                        okText="Yes"
+                        cancelText="No"
+                        onConfirm={onResign}
+                    >
+                        <Button icon={<LogoutOutlined />}>Resign</Button>
+                    </Popconfirm>
+                )}
+                {mode === 'p2p' && (
+                    <Popconfirm
+                        title="Offer Draw"
+                        description="Are you sure want to draw this game?"
+                        okText="Yes"
+                        cancelText="No"
+                        onConfirm={onRequestDraw}
+                    >
+                        <Button icon={<FlagOutlined />}>Draw</Button>
+                    </Popconfirm>
+                )}
                 <Popconfirm
-                    title="Resign the Game"
-                    description="Are you sure want to resign from this game?"
+                    title="Restart the Game"
+                    description="Are you sure want to restart this game?"
                     okText="Yes"
                     cancelText="No"
-                    onConfirm={onResign}
+                    onConfirm={onReset}
                 >
-                    <Button icon={<LogoutOutlined />}>Resign</Button>
-                </Popconfirm>
-                <Popconfirm
-                    title="Offer Draw"
-                    description="Are you sure want to draw this game?"
-                    okText="Yes"
-                    cancelText="No"
-                    onConfirm={onRequestDraw}
-                >
-                    <Button icon={<FlagOutlined />}>Draw</Button>
+                    <Button icon={<FlagOutlined />}>Restart</Button>
                 </Popconfirm>
             </Flex>
             <Divider />
+            {mode === 'chessbot' && (
+                <>
+                    <Typography.Text>Stockfish Level</Typography.Text>
+                    <Slider
+                        value={stockfishLevel}
+                        onChange={onDepthChange}
+                        min={1}
+                        max={5}
+                        marks={{
+                            1: 'Beginner',
+                            2: 'Easy',
+                            3: 'Medium',
+                            4: 'Hard',
+                            5: 'Expert',
+                        }}
+                        step={1}
+                    />
+                    <Divider />
+                </>
+            )}
             <Moves movesList={movesList} />
         </>
     )
@@ -110,7 +154,7 @@ export const Moves = ({ movesList }) => {
 
 const styles = {
     move: {
-        width: '4rem',
+        width: '5rem',
     },
     moveNumber: {
         display: 'block',

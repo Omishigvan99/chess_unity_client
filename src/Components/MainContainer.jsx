@@ -24,8 +24,12 @@ const MainContainer = () => {
         >
             <Routes>
                 <Route
-                    path="/arena/:roomId"
-                    element={<ArenaView></ArenaView>}
+                    path="p2p/arena/:roomId"
+                    element={<ArenaView socketChannel="p2p"></ArenaView>}
+                ></Route>
+                <Route
+                    path="chessbot/arena/:roomId"
+                    element={<ArenaView socketChannel="chessbot"></ArenaView>}
                 ></Route>
             </Routes>
         </Content>

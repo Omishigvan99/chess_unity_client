@@ -41,7 +41,9 @@ function LoginForm({ form, error, setError }) {
                     username: responseData.data.user.username,
                     email: responseData.data.user.email,
                     name: responseData.data.user.name,
-                    avatar: responseData.data.user.avatar,
+                    avatar: responseData.data.user.avatar
+                        ? responseData.data.user.avatar.url
+                        : null,
                     accessToken: responseData.data.accessToken,
                     refreshToken: responseData.data.refreshToken,
                 })

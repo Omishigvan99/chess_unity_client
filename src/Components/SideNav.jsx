@@ -21,22 +21,22 @@ function getItem(label, key, icon, children) {
 //configuring menu items for side nav
 const items = [
     getItem('Play', 'play', <DesktopOutlined />, [
-        getItem('Play with computer', 'play-computer'),
+        // getItem('Play with computer', 'play-computer'),
         getItem('Play with a friend', 'play-friend', null, [
             getItem('Create Game', 'create-game'),
             getItem('Join Game', 'join-game'),
         ]),
-        getItem('Quick Game', 'quick-game'),
+        getItem('Play with a computer', 'play-computer'),
     ]),
-    getItem('Puzzles', 'puzzel', <UserOutlined />, [
-        getItem('Solve Puzzle', 'puzzel-solve'),
-        getItem('Create Puzzle', 'puzzel-create'),
-    ]),
-    getItem('Tournaments', 'tournament', <TeamOutlined />, [
-        getItem('Play Tournament', 'tournament-play'),
-        getItem('Host Tournament', 'tournament-host'),
-        getItem('Watch Games', 'tournament-watch'),
-    ]),
+    // getItem('Puzzles', 'puzzel', <UserOutlined />, [
+    //     getItem('Solve Puzzle', 'puzzel-solve'),
+    //     getItem('Create Puzzle', 'puzzel-create'),
+    // ]),
+    // getItem('Tournaments', 'tournament', <TeamOutlined />, [
+    //     getItem('Play Tournament', 'tournament-play'),
+    //     getItem('Host Tournament', 'tournament-host'),
+    //     getItem('Watch Games', 'tournament-watch'),
+    // ]),
     {
         type: 'divider',
     },
@@ -54,7 +54,7 @@ const SideNav = () => {
     const { collapsed, setCollapsed, setBroken, broken } =
         useContext(SidenavContext)
     const [collapsedWidth, setCollapsedWidth] = useState(80)
-    const { setOpenCreateGame, setOpenJoinGame } = useContext(ModalContext)
+    const { openCreateGameModal, setOpenJoinGame } = useContext(ModalContext)
     const { setColorStyle } = useContext(CustomThemeContext)
     const {
         token: { colorBorder },
@@ -72,7 +72,7 @@ const SideNav = () => {
     }
 
     //menu click handler
-    const onMenuClickHandler = (event) => {
+    const onMenuClickHandler = async (event) => {
         switch (event.key) {
             case 'dark-mode-on':
                 setColorStyle('dark')
@@ -81,10 +81,13 @@ const SideNav = () => {
                 setColorStyle('light')
                 break
             case 'create-game':
-                setOpenCreateGame(true)
+                openCreateGameModal(true, 'p2p')
                 break
             case 'join-game':
                 setOpenJoinGame(true)
+                break
+            case 'play-computer':
+                openCreateGameModal(true, 'chessbot')
                 break
             default:
                 break

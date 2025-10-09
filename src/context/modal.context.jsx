@@ -13,7 +13,10 @@ export const ModalContext = React.createContext({
     openLogin: false,
     openSignup: false,
     openChangePassword: false,
-    openCreateGame: false,
+    openCreateGame: {
+        open: false,
+        forChannel: 'chessbot',
+    },
     openJoinGame: false,
     openGameResult: false,
     openRequest: false,
@@ -25,6 +28,7 @@ export const ModalContext = React.createContext({
     setOpenGameResult: () => {},
     openGameResultModal: () => {},
     openRequestModal: () => {},
+    openCreateGameModal: (open, forChannel) => {},
 })
 
 /**
@@ -39,7 +43,10 @@ export default function ModalContextProvider({ children }) {
     const [openLogin, setOpenLogin] = useState(false)
     const [openSignup, setOpenSignup] = useState(false)
     const [openChangePassword, setOpenChangePassword] = useState(false)
-    const [openCreateGame, setOpenCreateGame] = useState(false)
+    const [openCreateGame, setOpenCreateGame] = useState({
+        open: false,
+        forChannel: 'chessbot',
+    })
     const [openJoinGame, setOpenJoinGame] = useState(false)
     const [openGameResult, setOpenGameResult] = useState({
         open: false,
@@ -127,6 +134,22 @@ export default function ModalContextProvider({ children }) {
         })
     }
 
+    /**
+     * Opens the create game modal with the specified parameters.
+     *
+     * @param {boolean} open - Determines whether the modal should be open or closed.
+     * @param {string} forChannel - The channel for which the game should be created.
+     * @default forChannel - 'chessbot'
+     */
+    function openCreateGameModal(open, forChannel = 'chessbot') {
+        setOpenCreateGame(() => {
+            return {
+                open,
+                forChannel,
+            }
+        })
+    }
+
     return (
         <ModalContext.Provider
             value={{
@@ -145,6 +168,7 @@ export default function ModalContextProvider({ children }) {
                 setOpenGameResult,
                 openGameResultModal,
                 openRequestModal,
+                openCreateGameModal,
             }}
         >
             {children}

@@ -40,6 +40,7 @@ const ChessBoard = ({
         guideForegroundColor: '#F0D9B5',
     },
     onMove = () => {},
+    onRemoteMove = () => {},
     onCheckmate = () => {},
     onStalemate = () => {},
     onInsufficientMaterial = () => {},
@@ -102,6 +103,12 @@ const ChessBoard = ({
 
                 if (!isRemoteMove) {
                     onMove({ ...currentMove }, chess.fen(), chess.history())
+                } else {
+                    onRemoteMove(
+                        { ...currentMove },
+                        chess.fen(),
+                        chess.history()
+                    )
                 }
 
                 //highlighting move played
@@ -162,7 +169,13 @@ const ChessBoard = ({
                 callback()
             }
         },
-        [options.flip, options.activeColor, options.enableGuide]
+        [
+            options.flip,
+            options.activeColor,
+            options.enableGuide,
+            onMove,
+            onRemoteMove,
+        ]
     )
 
     // load fen

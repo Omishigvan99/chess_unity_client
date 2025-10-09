@@ -1,14 +1,27 @@
-import { Form, Input, Button, Space, Card, Image, theme } from 'antd'
+import {
+    Form,
+    Input,
+    Button,
+    Space,
+    Card,
+    Image,
+    theme,
+    Slider,
+    Typography,
+} from 'antd'
 import { CopyOutlined } from '@ant-design/icons'
-import { useContext, useEffect, useState } from 'react'
+import { useCallback, useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { ModalContext } from '../../context/modal.context'
 import { P2P_URL } from '../../constants/URL'
 
-function CreateGameForm({ link, roomId }) {
+const { Text } = Typography
+
+function CreateGameForm({ link, roomId, showStockfishLevel = false }) {
     const [form] = Form.useForm()
     const { setOpenCreateGame } = useContext(ModalContext)
     const [selectedPiece, setSelectedPiece] = useState(3)
+    const [stockfishLevel, setStockfishLevel] = useState(3)
     const [isCopied, setIsCopied] = useState(false)
     const {
         token: { colorPrimaryHover },
@@ -25,9 +38,15 @@ function CreateGameForm({ link, roomId }) {
     }, [isCopied])
 
     // handler to set the selected piece
-    const onPieceChoiceHandler = (option) => {
+    const onPieceChoiceHandler = useCallback((option) => {
         setSelectedPiece(option)
-    }
+    }, [])
+
+    // copy handler
+    const onCopyHandler = useCallback((text) => {
+        navigator.clipboard.writeText(text)
+        setIsCopied(true)
+    }, [])
 
     // form submit handler
     const onStartGameHandler = () => {
@@ -44,16 +63,28 @@ function CreateGameForm({ link, roomId }) {
                     return Math.random() > 0.5 ? 'black' : 'white'
             }
         })()
-        navigate(`${P2P_URL}/${roomId}?color=${color}`)
+
+        // Extract the pathname from complete URL for internal routing
+        try {
+            const url = new URL(link)
+            const internalPath = `${url.pathname}${
+                url.search ? url.search + '&' : '?'
+            }color=${color}${
+                showStockfishLevel ? `&level=${stockfishLevel}` : ''
+            }`
+            navigate(internalPath)
+        } catch (error) {
+            // If link is already a relative path, use it directly
+            navigate(
+                `${link}?color=${color}${
+                    showStockfishLevel ? `&level=${stockfishLevel}` : ''
+                }`
+            )
+        }
+
         form.resetFields()
         setIsCopied(false)
         setOpenCreateGame(false)
-    }
-
-    // copy handler
-    const onCopyHandler = (text) => {
-        navigator.clipboard.writeText(text)
-        setIsCopied(true)
     }
 
     return (
@@ -129,6 +160,40 @@ function CreateGameForm({ link, roomId }) {
                     </Card>
                 </Space>
             </Form.Item>
+
+            {showStockfishLevel && (
+                <Form.Item label="Stockfish Level" name="stockfish-level">
+                    <Space direction="vertical" style={{ width: '100%' }}>
+                        <Slider
+                            min={1}
+                            max={5}
+                            value={stockfishLevel}
+                            onChange={setStockfishLevel}
+                            marks={{
+                                1: 'Beginner',
+                                2: 'Easy',
+                                3: 'Medium',
+                                4: 'Hard',
+                                5: 'Expert',
+                            }}
+                            step={1}
+                        />
+                        <Text type="secondary">
+                            Current Level: {stockfishLevel} -{' '}
+                            {stockfishLevel === 1
+                                ? 'Beginner'
+                                : stockfishLevel === 2
+                                ? 'Easy'
+                                : stockfishLevel === 3
+                                ? 'Medium'
+                                : stockfishLevel === 4
+                                ? 'Hard'
+                                : 'Expert'}
+                        </Text>
+                    </Space>
+                </Form.Item>
+            )}
+
             <Form.Item>
                 <Button
                     type="primary"

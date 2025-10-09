@@ -4,7 +4,7 @@ import { Row, Col, Card, Space } from 'antd'
 import Loading from '../Components/UI/Loading'
 import ChessBoard, { remoteChessEvent } from '../Components/board/ChessBoard'
 import Player from '../Components/UI/Player'
-import { useContext, useEffect, useRef, useState } from 'react'
+import { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { useSocket } from '../hooks/useSocket'
 import { MessageContext } from '../context/message.context'
 import { getRoomDetails, joinRoom } from '../utils/rooms'
@@ -18,7 +18,7 @@ import { movesToPgn } from '../utils/chess'
  * ArenaView component is used to display the game arena where players can play chess.
  * @returns {JSX.Element} - Returns the JSX element of the component.
  **/
-function ArenaView() {
+function ArenaView({ socketChannel = 'p2p' }) {
     const params = useParams()
     const navigate = useNavigate()
     const location = useLocation()
@@ -43,7 +43,7 @@ function ArenaView() {
     const [size, setSize] = useState(null)
     const rowContainer = useRef(null)
     const colContainer = useRef(null)
-    const socket = useSocket('/p2p')
+    const socket = useSocket(`/${socketChannel}`)
     const [roomBoardState, setRoomBoardState] = useState(null)
     const [roomBoardPgn, setRoomBoardPgn] = useState(null)
     const [previousMove, setPreviousMove] = useState(null)
@@ -51,6 +51,18 @@ function ArenaView() {
 
     //getting color from URLSearchParams
     const color = URLSearchParams.get('color')
+    const levelFromUrl = URLSearchParams.get('level')
+
+    // Set initial stockfish level from URL or default to 3
+    const [stockfishLevel, setStockfishLevel] = useState(() => {
+        return levelFromUrl ? parseInt(levelFromUrl) : 3
+    })
+    const stockfishLevelRef = useRef(stockfishLevel)
+
+    // Keep ref updated with current value
+    useEffect(() => {
+        stockfishLevelRef.current = stockfishLevel
+    }, [stockfishLevel])
 
     // This useEffect hook is to set current player
     useEffect(() => {
@@ -66,8 +78,11 @@ function ArenaView() {
 
     // This useEffect hook is used to handle the socket events
     useEffect(() => {
+        if (!socket) return
+
         // Listen for 'user-connected' events from the server.
         socket.on('user-connected', (data) => {
+            console.log(data)
             //set the opponent state with the opponent data from the server response.
             if (data.id !== player.id) {
                 setOpponent({
@@ -250,7 +265,7 @@ function ArenaView() {
             // Remove all listeners from the socket to prevent memory leaks.
             socket.removeAllListeners()
         }
-    }, [player, opponent, params.roomId])
+    }, [player, opponent, params.roomId, socket.id])
 
     // This useEffect hook is used to handle room joining when the component mounts.
     useEffect(() => {
@@ -334,6 +349,7 @@ function ArenaView() {
                         avatar: player.avatar,
                         isGuest: !auth.isAuthenticated,
                         color: playerColor,
+                        stockfishLevel,
                     })
 
                     // Update player's color and set player in room state.
@@ -355,7 +371,7 @@ function ArenaView() {
                     playerColor = opponentColor === 'white' ? 'black' : 'white'
                 }
 
-                //pushing url trimmed of color query to history
+                //pushing url trimmed of color and level query parameters to history
                 navigate(location.pathname, {
                     replace: true,
                 })
@@ -369,6 +385,7 @@ function ArenaView() {
                     avatar: player.avatar,
                     isGuest: !auth.isAuthenticated,
                     color: playerColor,
+                    stockfishLevel,
                 })
 
                 // Update player's color and set player in room state.
@@ -387,7 +404,7 @@ function ArenaView() {
                 error('Failed to join Room')
             }
         })()
-    }, [params.roomId, player])
+    }, [params.roomId, player, stockfishLevel])
 
     // This useEffect hook is used to handle the resizing of the row and column containers.
     useEffect(() => {
@@ -444,16 +461,26 @@ function ArenaView() {
     }
 
     // This function is used to handle the event when a player makes a move on the chessboard.
-    const onMoveHandler = (move, FEN, history) => {
-        socket.emit('move', {
-            roomId: params.roomId,
-            isGuest: !auth.isAuthenticated,
-            move: move,
-            FEN: FEN,
-            history: history,
-        })
+    const onMoveHandler = useCallback(
+        (move, FEN, history) => {
+            const currentLevel = stockfishLevelRef.current
+            socket.emit('move', {
+                roomId: params.roomId,
+                isGuest: !auth.isAuthenticated,
+                move: move,
+                FEN: FEN,
+                history: history,
+                stockfishLevel: currentLevel,
+            })
+            setMovesList(() => history)
+        },
+        [socket, params.roomId, auth.isAuthenticated]
+    )
+
+    // This function is used to handle the event when a remote player makes a move on the chessboard.
+    const onRemoteMoveHandler = useCallback((move, FEN, history) => {
         setMovesList(() => history)
-    }
+    }, [])
 
     // This function is used to handle the event when a player wins the game by checkmate.
     const onCheckmateHandler = (color) => {
@@ -538,6 +565,12 @@ function ArenaView() {
 
     //function to request a rematch
     const requestRematch = () => {
+        // check if playing against chessbot
+        if (opponent.id === 'stockfish17') {
+            resetGame()
+            return
+        }
+
         try {
             socket.emit('rematch:request', {
                 roomId: params.roomId,
@@ -548,6 +581,17 @@ function ArenaView() {
             error('Failed to request rematch')
         }
     }
+
+    // function to reset game state while playing against chessbot
+    const resetGame = useCallback(() => {
+        const currentLevel = stockfishLevelRef.current
+        remoteChessEvent.resetBoard(params.roomId)
+        socket.emit('reset', {
+            roomId: params.roomId,
+            isGuest: !auth.isAuthenticated,
+            stockfishLevel: currentLevel,
+        })
+    }, [params.roomId, socket, auth.isAuthenticated])
 
     //function to quit the game
     const quitGame = () => {
@@ -569,9 +613,9 @@ function ArenaView() {
                         ref={colContainer}
                         xs={24}
                         sm={24}
-                        md={14}
-                        xl={16}
-                        xxl={16}
+                        md={12}
+                        xl={14}
+                        xxl={14}
                     >
                         <Space
                             style={{
@@ -602,6 +646,7 @@ function ArenaView() {
                                     enableGuide: true,
                                 }}
                                 onMove={onMoveHandler}
+                                onRemoteMove={onRemoteMoveHandler}
                                 onCheckmate={onCheckmateHandler}
                                 onInsufficientMaterial={
                                     onInsufficientMaterialHandler
@@ -624,9 +669,9 @@ function ArenaView() {
                         }}
                         xs={24}
                         sm={24}
-                        md={10}
-                        xl={8}
-                        xxl={8}
+                        md={12}
+                        xl={10}
+                        xxl={10}
                     >
                         <Card
                             style={{
@@ -639,6 +684,12 @@ function ArenaView() {
                                 onLeaveRoom={leaveRoomHandler}
                                 onRequestDraw={requestDraw}
                                 onResign={resign}
+                                onReset={resetGame}
+                                onDepthChange={(value) => {
+                                    setStockfishLevel(value)
+                                }}
+                                stockfishLevel={stockfishLevel}
+                                mode={socketChannel}
                             ></ActionsTab>
                         </Card>
                     </Col>

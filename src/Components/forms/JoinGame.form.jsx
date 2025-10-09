@@ -46,14 +46,14 @@ function JoinGameForm() {
                     roomId: code,
                     isGuest: !auth.isAuthenticated,
                 })
-                navigate(`/arena/${code}`)
+                navigate(`p2p/arena/${code}`)
             } else {
                 const code = formData['user-code']
                 await getRoomDetails(socket, {
                     roomId: code,
                     isGuest: !auth.isAuthenticated,
                 })
-                navigate(`/arena/${code}`)
+                navigate(`p2p/arena/${code}`)
             }
         } catch (error) {
             setError({

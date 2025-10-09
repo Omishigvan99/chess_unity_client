@@ -5,7 +5,7 @@ import Loading from '../UI/Loading'
 import CreateGameForm from '../forms/CreateGame.form'
 import { createRoom, deleteRoom } from '../../utils/rooms'
 import { GlobalStore } from '../../store/global.store'
-import { P2P_URL } from '../../constants/URL'
+import { CHESSBOT_URL, P2P_URL } from '../../constants/URL'
 
 function CreateGame() {
     const { openCreateGame, setOpenCreateGame } = useContext(ModalContext)
@@ -26,9 +26,21 @@ function CreateGame() {
                 auth.isAuthenticated,
                 auth.isAuthenticated ? auth.id : guestId
             )
-            setLink(
-                `${import.meta.env.VITE_APP_URL}${P2P_URL}/${roomData.roomId}`
-            )
+
+            if (openCreateGame.forChannel === 'chessbot') {
+                setLink(
+                    `${import.meta.env.VITE_APP_URL}${CHESSBOT_URL}/${
+                        roomData.roomId
+                    }`
+                )
+            } else {
+                setLink(
+                    `${import.meta.env.VITE_APP_URL}${P2P_URL}/${
+                        roomData.roomId
+                    }`
+                )
+            }
+
             setRoomId(roomData.roomId)
         } catch (error) {
             setIsLoading(false)
@@ -40,15 +52,15 @@ function CreateGame() {
                     'Something went wrong while creating game',
             })
         }
-    }, [auth.isAuthenticated, auth.id, guestId])
+    }, [auth.isAuthenticated, auth.id, guestId, openCreateGame.forChannel])
 
     // useEffect to create room on server
     useEffect(() => {
-        if (!openCreateGame) return
+        if (!openCreateGame.open) return
         // call the function to create room
         initiateRoom()
         setIsLoading(false)
-    }, [openCreateGame, initiateRoom])
+    }, [openCreateGame.open, initiateRoom])
 
     // handler to cancel the game creation
     function onCancelHandler() {
@@ -59,7 +71,11 @@ function CreateGame() {
     }
 
     return (
-        <Modal open={openCreateGame} footer={null} onCancel={onCancelHandler}>
+        <Modal
+            open={openCreateGame.open}
+            footer={null}
+            onCancel={onCancelHandler}
+        >
             {error.isError ? (
                 <>
                     <Alert
@@ -75,6 +91,9 @@ function CreateGame() {
                         <CreateGameForm
                             link={link}
                             roomId={roomId}
+                            showStockfishLevel={
+                                openCreateGame.forChannel === 'chessbot'
+                            }
                         ></CreateGameForm>
                     </Loading>
                 </>

@@ -8,11 +8,13 @@ import { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { useSocket } from '../hooks/useSocket'
 import { MessageContext } from '../context/message.context'
 import { getRoomDetails, joinRoom } from '../utils/rooms'
+import { saveGame } from '../utils/games'
 import { GlobalStore } from '../store/global.store'
 import ActionsTab from '../Components/UI/ActionsTab'
 import { ModalContext } from '../context/modal.context'
 import * as constants from '../constants/chess'
 import { movesToPgn } from '../utils/chess'
+import { useSocketEvents } from '../hooks/useSocketEvents'
 
 /**
  * ArenaView component is used to display the game arena where players can play chess.
@@ -49,6 +51,19 @@ function ArenaView({ socketChannel = 'p2p' }) {
     const [previousMove, setPreviousMove] = useState(null)
     const [movesList, setMovesList] = useState([])
 
+    // Use refs to avoid closure issues with stale state
+    const movesListRef = useRef([])
+    const roomBoardStateRef = useRef(null)
+
+    // Keep refs in sync with state
+    useEffect(() => {
+        movesListRef.current = movesList
+    }, [movesList])
+
+    useEffect(() => {
+        roomBoardStateRef.current = roomBoardState
+    }, [roomBoardState])
+
     //getting color from URLSearchParams
     const color = URLSearchParams.get('color')
     const levelFromUrl = URLSearchParams.get('level')
@@ -76,197 +91,6 @@ function ArenaView({ socketChannel = 'p2p' }) {
         })
     }, [auth.isAuthenticated, guestId])
 
-    // This useEffect hook is used to handle the socket events
-    useEffect(() => {
-        if (!socket) return
-
-        // Listen for 'user-connected' events from the server.
-        socket.on('user-connected', (data) => {
-            console.log(data)
-            //set the opponent state with the opponent data from the server response.
-            if (data.id !== player.id) {
-                setOpponent({
-                    id: data.id,
-                    name: data.name,
-                    rating: data.rating,
-                    avatar: data.avatar,
-                    isConnected: true,
-                })
-                success(`${data.name} connected`)
-            }
-        })
-
-        // Listen for 'user-disconnected' events from the server.
-        socket.on('user-disconnected', (data) => {
-            //set the opponent state with the opponent data from the server response.
-            if (data.id === opponent.id) {
-                setOpponent((prevState) => {
-                    return {
-                        ...prevState,
-                        isConnected: false,
-                    }
-                })
-                error(`${data.name} disconnected`)
-            }
-        })
-
-        // listen for 'move' events from the server.
-        socket.on('remote-move', (data) => {
-            const { move, history } = data
-            // add the move to the moves list.
-            setMovesList(() => history)
-            // Emit the move to the remote chess event listeners.
-            remoteChessEvent.sendMove(params.roomId, move)
-        })
-
-        // listen for 'rematch:request' events from the server.
-        socket.on('rematch:request', () => {
-            openRequestModal(
-                true,
-                'Rematch Request',
-                'Your opponent has requested a rematch. Do you accept?',
-                () => {
-                    try {
-                        // Emit a 'rematch:response' event to the opponent with the response as 'accept'.
-                        socket.emit('rematch:response', {
-                            roomId: params.roomId,
-                            isGuest: !auth.isAuthenticated,
-                            response: 'accept',
-                        })
-                    } catch (err) {
-                        error('Failed to accept rematch request')
-                    }
-                },
-                () => {
-                    try {
-                        // Emit a 'rematch:response' event to the opponent with the response as 'reject'.
-                        socket.emit('rematch:response', {
-                            roomId: params.roomId,
-                            isGuest: !auth.isAuthenticated,
-                            response: 'reject',
-                        })
-
-                        //navigate to home page
-                        navigate('/')
-                    } catch (err) {
-                        error('Failed to reject rematch request')
-                    }
-                }
-            )
-        })
-
-        // listen for 'rematch:accept' events from the server.
-        socket.on('rematch:response', (data) => {
-            if (data.response === 'accept') {
-                // close the game result modal and reset the board.
-                openGameResultModal(false, {
-                    type: 'rematch',
-                    color: null,
-                    playerImageUrl: player.avatar,
-                    opponentImageUrl: opponent.avatar,
-                    message: constants.REMATCH_AGREED,
-                    requestRematch: () => {},
-                    quit: () => {},
-                })
-
-                socket.emit('reset', {
-                    roomId: params.roomId,
-                    isGuest: !auth.isAuthenticated,
-                })
-            } else if (data.response === 'reject') {
-                error('Rematch request rejected')
-            }
-        })
-
-        // listen for 'resign' events from the server.
-        socket.on('resignation', () => {
-            openGameResultModal(true, {
-                type: 'win',
-                color: player.color[0],
-                playerImageUrl: player.avatar,
-                opponentImageUrl: opponent.avatar,
-                message: constants.WIN_RESIGNATION,
-                requestRematch: requestRematch,
-                quit: quitGame,
-            })
-        })
-
-        // listen for 'draw:request' events from the server.
-        socket.on('draw:request', () => {
-            openRequestModal(
-                true,
-                'Draw Request',
-                'Your opponent has requested a draw. Do you accept?',
-                () => {
-                    try {
-                        socket.emit('draw:response', {
-                            roomId: params.roomId,
-                            isGuest: !auth.isAuthenticated,
-                            response: 'accept',
-                        })
-                        openGameResultModal(true, {
-                            type: 'draw',
-                            color: null,
-                            playerImageUrl: player.avatar,
-                            opponentImageUrl: opponent.avatar,
-                            message: constants.DRAW_AGREED,
-                            requestRematch: requestRematch,
-                            quit: quitGame,
-                        })
-                    } catch (err) {
-                        error('Failed to accept draw request')
-                    }
-                },
-                () => {
-                    try {
-                        socket.emit('draw:response', {
-                            roomId: params.roomId,
-                            isGuest: !auth.isAuthenticated,
-                            response: 'reject',
-                        })
-                    } catch (err) {
-                        error('Failed to reject draw request')
-                    }
-                }
-            )
-        })
-
-        // listen for 'draw:response' events from the server.
-        socket.on('draw:response', (data) => {
-            if (data.response === 'accept') {
-                openGameResultModal(true, {
-                    type: 'draw',
-                    color: null,
-                    playerImageUrl: player.avatar,
-                    opponentImageUrl: opponent.avatar,
-                    message: constants.DRAW_AGREED,
-                    requestRematch: requestRematch,
-                    quit: quitGame,
-                })
-            }
-
-            if (data.response === 'reject') {
-                error('Draw request rejected')
-            }
-        })
-
-        // listen for 'reset' events from the server.
-        socket.on('game:reset', () => {
-            console.log('Game Reset')
-            remoteChessEvent.resetBoard(params.roomId)
-            setPreviousMove(null)
-            setMovesList([])
-            setRoomBoardPgn(movesToPgn([]))
-            success('New Game Started')
-        })
-
-        // Return a cleanup function to run when the component unmounts.
-        return () => {
-            // Remove all listeners from the socket to prevent memory leaks.
-            socket.removeAllListeners()
-        }
-    }, [player, opponent, params.roomId, socket.id])
-
     // This useEffect hook is used to handle room joining when the component mounts.
     useEffect(() => {
         // Check if necessary dependencies are present and if the player is already in the room.
@@ -287,10 +111,12 @@ function ArenaView({ socketChannel = 'p2p' }) {
                 if (response.data.board && response.data.previousMove) {
                     // Set the board state to the current board state.
                     setRoomBoardState(response.data.board)
+                    roomBoardStateRef.current = response.data.board // Update ref
                     // Set the previous move to the current previous move.
                     setPreviousMove(response.data.previousMove)
                     // Set the moves list to the current moves list.
                     setMovesList(() => response.data.history)
+                    movesListRef.current = response.data.history // Update ref
                     // Set the board state to the PGN format of the moves list.
                     setRoomBoardPgn(movesToPgn(response.data.history))
                 }
@@ -473,6 +299,9 @@ function ArenaView({ socketChannel = 'p2p' }) {
                 stockfishLevel: currentLevel,
             })
             setMovesList(() => history)
+            movesListRef.current = history // Update ref
+            setRoomBoardState(FEN) // Update board state
+            roomBoardStateRef.current = FEN // Update ref
         },
         [socket, params.roomId, auth.isAuthenticated]
     )
@@ -480,10 +309,144 @@ function ArenaView({ socketChannel = 'p2p' }) {
     // This function is used to handle the event when a remote player makes a move on the chessboard.
     const onRemoteMoveHandler = useCallback((move, FEN, history) => {
         setMovesList(() => history)
+        movesListRef.current = history // Update ref
+        setRoomBoardState(FEN) // Update board state
+        roomBoardStateRef.current = FEN // Update ref
     }, [])
 
+    // This function is used to save the game when it ends
+    const saveGameToServer = useCallback(
+        async (gameResult, customFEN = null, customMoves = null) => {
+            try {
+                // Only save if both players are present and it's not a bot game
+                if (
+                    !player.id ||
+                    !opponent.id ||
+                    opponent.id === 'stockfish17'
+                ) {
+                    return
+                }
+
+                // Determine who should save the game to prevent race conditions
+                // Use a deterministic approach: player with lexicographically smaller ID saves the game
+                // This ensures that exactly one player will always save, regardless of timing
+                const shouldSave = player.id < opponent.id
+
+                if (!shouldSave) {
+                    console.log(
+                        `Player ${opponent.id} (smaller ID) will save the game, not ${player.id}`
+                    )
+                    return
+                }
+
+                console.log(
+                    `Player ${player.id} (smaller ID) is saving the game`
+                )
+
+                // Add a small delay to reduce race conditions further
+                // This allows the server-side checks to process any potential concurrent requests
+                await new Promise((resolve) => setTimeout(resolve, 200))
+
+                // Use the most current data available (refs contain the latest values)
+                const currentBoardState =
+                    customFEN ||
+                    roomBoardStateRef.current ||
+                    'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+                const currentMoves = customMoves || movesListRef.current
+
+                console.log('Saving game with data:', {
+                    boardState: currentBoardState,
+                    movesCount: currentMoves.length,
+                    moves: currentMoves,
+                    gameResult,
+                    // Debug info
+                    stateMovesCount: movesList.length,
+                    refMovesCount: movesListRef.current.length,
+                    stateBoardState: roomBoardState,
+                    refBoardState: roomBoardStateRef.current,
+                })
+
+                // Create a unique game identifier by combining roomId with timestamp
+                // This ensures each game instance is saved separately even in the same room
+                const uniqueGameId = `${params.roomId}_${Date.now()}`
+
+                console.log(
+                    `Saving game with unique ID: ${uniqueGameId} (original room: ${params.roomId})`
+                )
+
+                const gameData = {
+                    roomId: params.roomId, // Keep original room ID for room association
+                    gameInstanceId: uniqueGameId, // Unique identifier for this specific game instance
+                    hostId: player.id, // The current player is considered the host for saving purposes
+                    players: {
+                        white:
+                            player.color === 'white'
+                                ? {
+                                      id: player.id,
+                                      name: player.name,
+                                      rating: player.rating,
+                                      avatar: player.avatar,
+                                  }
+                                : {
+                                      id: opponent.id,
+                                      name: opponent.name,
+                                      rating: opponent.rating,
+                                      avatar: opponent.avatar,
+                                  },
+                        black:
+                            player.color === 'black'
+                                ? {
+                                      id: player.id,
+                                      name: player.name,
+                                      rating: player.rating,
+                                      avatar: player.avatar,
+                                  }
+                                : {
+                                      id: opponent.id,
+                                      name: opponent.name,
+                                      rating: opponent.rating,
+                                      avatar: opponent.avatar,
+                                  },
+                    },
+                    board: currentBoardState,
+                    history: currentMoves,
+                    status: gameResult.status,
+                    winner: gameResult.winner,
+                    draw_reason: gameResult.draw_reason,
+                    win_reason: gameResult.win_reason,
+                    type: socketChannel,
+                }
+
+                await saveGame(gameData)
+                console.log('Game saved successfully by player:', player.id)
+            } catch (error) {
+                console.error('Failed to save game:', error)
+                // Don't show error to user as this shouldn't interrupt their experience
+            }
+        },
+        [player, opponent, params.roomId, socketChannel] // Removed roomBoardState and movesList dependencies
+    )
+
     // This function is used to handle the event when a player wins the game by checkmate.
-    const onCheckmateHandler = (color) => {
+    const onCheckmateHandler = (color, fen = null, history = null) => {
+        const isPlayerWinner = color !== player.color[0]
+        const winner = isPlayerWinner
+            ? player.color
+            : player.color === 'white'
+            ? 'black'
+            : 'white'
+
+        // Save the game with current board state and moves
+        saveGameToServer(
+            {
+                status: 'completed',
+                winner: winner,
+                win_reason: 'checkmate',
+            },
+            fen,
+            history
+        )
+
         openGameResultModal(true, {
             type: color === player.color[0] ? 'loss' : 'win',
             color: color === 'w' ? 'b' : 'w',
@@ -499,7 +462,18 @@ function ArenaView({ socketChannel = 'p2p' }) {
     }
 
     // This function is used to handle the event when a player wins the game by stalemate.
-    const onStalemateHandler = () => {
+    const onStalemateHandler = (fen = null, history = null) => {
+        // Save the game with current board state and moves
+        saveGameToServer(
+            {
+                status: 'completed',
+                winner: null,
+                draw_reason: 'stalemate',
+            },
+            fen,
+            history
+        )
+
         openGameResultModal(true, {
             type: 'draw',
             color: null,
@@ -512,7 +486,18 @@ function ArenaView({ socketChannel = 'p2p' }) {
     }
 
     // This function is used to handle the event when a player wins the game by insufficient material.
-    const onInsufficientMaterialHandler = () => {
+    const onInsufficientMaterialHandler = (fen = null, history = null) => {
+        // Save the game with current board state and moves
+        saveGameToServer(
+            {
+                status: 'completed',
+                winner: null,
+                draw_reason: 'insufficient_material',
+            },
+            fen,
+            history
+        )
+
         openGameResultModal(true, {
             type: 'draw',
             color: null,
@@ -525,7 +510,18 @@ function ArenaView({ socketChannel = 'p2p' }) {
     }
 
     // This function is used to handle the event when a player wins the game by threefold repetition.
-    const onThreefoldRepetitionHandler = () => {
+    const onThreefoldRepetitionHandler = (fen = null, history = null) => {
+        // Save the game with current board state and moves
+        saveGameToServer(
+            {
+                status: 'completed',
+                winner: null,
+                draw_reason: 'threefold_repetition',
+            },
+            fen,
+            history
+        )
+
         openGameResultModal(true, {
             type: 'draw',
             color: null,
@@ -540,6 +536,14 @@ function ArenaView({ socketChannel = 'p2p' }) {
     // function to resign from the game
     const resign = () => {
         try {
+            // Save the game - current player resigned, so opponent wins
+            const opponentColor = player.color === 'white' ? 'black' : 'white'
+            saveGameToServer({
+                status: 'completed',
+                winner: opponentColor,
+                win_reason: 'resignation',
+            })
+
             socket.emit('resign', {
                 roomId: params.roomId,
                 isGuest: !auth.isAuthenticated,
@@ -598,6 +602,28 @@ function ArenaView({ socketChannel = 'p2p' }) {
         leaveRoomHandler()
         navigate('/')
     }
+
+    // Use custom hook to handle all socket events
+    useSocketEvents({
+        socket,
+        player,
+        opponent,
+        params,
+        auth,
+        setOpponent,
+        setMovesList,
+        movesListRef,
+        setPreviousMove,
+        setRoomBoardPgn,
+        saveGameToServer,
+        openGameResultModal,
+        openRequestModal,
+        requestRematch,
+        quitGame,
+        success,
+        error,
+        navigate,
+    })
 
     return (
         <>

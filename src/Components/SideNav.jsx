@@ -1,6 +1,13 @@
 import { useContext, useState } from 'react'
-import { DesktopOutlined, TeamOutlined, UserOutlined } from '@ant-design/icons'
+import {
+    DesktopOutlined,
+    TeamOutlined,
+    UserOutlined,
+    BarChartOutlined,
+    PlayCircleOutlined,
+} from '@ant-design/icons'
 import { Layout, Menu, theme } from 'antd'
+import { useNavigate } from 'react-router-dom'
 import { SidenavContext } from '../context/sidenav.context'
 import { CustomThemeContext } from '../context/customTheme.context'
 import MenuTrigger from './UI/MenuTrigger'
@@ -20,7 +27,8 @@ function getItem(label, key, icon, children) {
 
 //configuring menu items for side nav
 const items = [
-    getItem('Play', 'play', <DesktopOutlined />, [
+    getItem('Dashboard', 'dashboard', <BarChartOutlined />),
+    getItem('Play', 'play', <PlayCircleOutlined />, [
         // getItem('Play with computer', 'play-computer'),
         getItem('Play with a friend', 'play-friend', null, [
             getItem('Create Game', 'create-game'),
@@ -28,15 +36,6 @@ const items = [
         ]),
         getItem('Play with a computer', 'play-computer'),
     ]),
-    // getItem('Puzzles', 'puzzel', <UserOutlined />, [
-    //     getItem('Solve Puzzle', 'puzzel-solve'),
-    //     getItem('Create Puzzle', 'puzzel-create'),
-    // ]),
-    // getItem('Tournaments', 'tournament', <TeamOutlined />, [
-    //     getItem('Play Tournament', 'tournament-play'),
-    //     getItem('Host Tournament', 'tournament-host'),
-    //     getItem('Watch Games', 'tournament-watch'),
-    // ]),
     {
         type: 'divider',
     },
@@ -56,6 +55,7 @@ const SideNav = () => {
     const [collapsedWidth, setCollapsedWidth] = useState(80)
     const { openCreateGameModal, setOpenJoinGame } = useContext(ModalContext)
     const { setColorStyle } = useContext(CustomThemeContext)
+    const navigate = useNavigate()
     const {
         token: { colorBorder },
     } = theme.useToken()
@@ -74,6 +74,9 @@ const SideNav = () => {
     //menu click handler
     const onMenuClickHandler = async (event) => {
         switch (event.key) {
+            case 'dashboard':
+                navigate('/dashboard')
+                break
             case 'dark-mode-on':
                 setColorStyle('dark')
                 break
@@ -114,7 +117,7 @@ const SideNav = () => {
         >
             <div className="demo-logo-vertical" />
             <Menu
-                defaultSelectedKeys={['play-computer']}
+                defaultSelectedKeys={['dashboard']}
                 defaultOpenKeys={['play']}
                 mode="inline"
                 items={collapsed ? [...items, ...secondaryItems] : items}

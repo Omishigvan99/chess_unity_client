@@ -1,5 +1,6 @@
 // Importing axios for making HTTP requests
 import axios from 'axios'
+import { getAuthHeaders } from './tokenUtils.js'
 
 /**
  * Asynchronously saves a game to the server.
@@ -27,9 +28,7 @@ export async function saveGame(gameData) {
             import.meta.env.VITE_API_URL + '/games/create-game',
             gameData,
             {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: getAuthHeaders(),
                 withCredentials: true, // Include cookies for authentication
             }
         )
@@ -68,6 +67,7 @@ export async function getGame(gameId) {
         const response = await axios.get(
             import.meta.env.VITE_API_URL + `/games/get-game/${gameId}`,
             {
+                headers: getAuthHeaders(),
                 withCredentials: true, // Include cookies for authentication
             }
         )
@@ -95,9 +95,7 @@ export async function updateGame(gameId, updateData) {
             import.meta.env.VITE_API_URL + `/games/update-game/${gameId}`,
             updateData,
             {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: getAuthHeaders(),
                 withCredentials: true, // Include cookies for authentication
             }
         )
@@ -123,6 +121,7 @@ export async function deleteGame(gameId) {
         const response = await axios.delete(
             import.meta.env.VITE_API_URL + `/games/delete-game/${gameId}`,
             {
+                headers: getAuthHeaders(),
                 withCredentials: true, // Include cookies for authentication
             }
         )

@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { getAuthHeader } from './tokenUtils.js'
 
 // profile pic upload function
 export async function uploadProfileImage({ file }) {
@@ -10,6 +11,7 @@ export async function uploadProfileImage({ file }) {
             formData,
             {
                 headers: {
+                    ...getAuthHeader(),
                     'Content-Type': 'multipart/form-data',
                 },
                 withCredentials: true,

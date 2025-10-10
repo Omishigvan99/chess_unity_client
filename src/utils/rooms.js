@@ -1,5 +1,6 @@
 // Importing axios for making HTTP requests
 import axios from 'axios'
+import { getAuthHeaders } from './tokenUtils.js'
 
 /**
  * Asynchronously creates a new room.
@@ -14,10 +15,12 @@ export async function createRoom(isAuthenticated, hostId) {
         const response = await axios.get(
             import.meta.env.VITE_API_URL + '/p2p/create-room',
             {
+                headers: getAuthHeaders(),
                 params: {
                     guest: !isAuthenticated,
                     hostId: hostId,
                 },
+                withCredentials: true,
             }
         )
         // Returning the value of the created room
@@ -39,10 +42,12 @@ export function deleteRoom(roomId, isAuthenticated) {
     try {
         // Making a GET request to the 'delete-room' endpoint of the API
         axios.get(import.meta.env.VITE_API_URL + '/p2p/delete-room', {
+            headers: getAuthHeaders(),
             params: {
                 roomId: roomId,
                 guest: isAuthenticated,
             },
+            withCredentials: true,
         })
     } catch (error) {
         // Logging the error to the console

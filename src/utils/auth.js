@@ -1,4 +1,9 @@
 import axios from 'axios'
+import {
+    setAccessToken,
+    removeAccessToken,
+    getAuthHeaders,
+} from './tokenUtils.js'
 
 const errObj = function (errorResponse) {
     this.message = errorResponse.data.title
@@ -62,9 +67,7 @@ export async function logoutHandler() {
             import.meta.env.VITE_API_URL + '/users/logout',
             {},
             {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: getAuthHeaders(),
                 withCredentials: true,
             }
         )
@@ -84,9 +87,7 @@ export async function updateHandler({ name, email }) {
                 email: email,
             },
             {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: getAuthHeaders(),
                 withCredentials: true,
             }
         )
@@ -113,9 +114,7 @@ export async function changePasswordHandler({
                 confirmNewPassword: confirmNewPassword,
             },
             {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: getAuthHeaders(),
                 withCredentials: true,
             }
         )

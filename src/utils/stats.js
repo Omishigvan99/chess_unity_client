@@ -1,5 +1,6 @@
 // Importing axios for making HTTP requests
 import axios from 'axios'
+import { getAuthHeaders } from './tokenUtils.js'
 
 /**
  * Asynchronously retrieves player statistics from the server.
@@ -13,6 +14,7 @@ export async function getPlayerStats(playerId) {
         const response = await axios.get(
             `${import.meta.env.VITE_API_URL}/games/stats/player/${playerId}`,
             {
+                headers: getAuthHeaders(),
                 withCredentials: true, // Include cookies for authentication
             }
         )
@@ -34,6 +36,7 @@ export async function getGlobalStats() {
         const response = await axios.get(
             `${import.meta.env.VITE_API_URL}/games/stats/global`,
             {
+                headers: getAuthHeaders(),
                 withCredentials: true, // Include cookies for authentication
             }
         )
